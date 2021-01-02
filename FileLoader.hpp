@@ -7,7 +7,7 @@
 
 #include <list>
 #include <fstream>
-#include "Sequence.hpp"
+#include "Sequence/Sequence.hpp"
 
 enum FileType {
     TableTennis,

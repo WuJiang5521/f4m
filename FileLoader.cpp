@@ -16,7 +16,7 @@ list<Sequence> extract_tt_sequences(json j) {
 
         for (auto game: j["record"]["list"]) {
             for (auto rally: game["list"]) {
-                auto events = list<Event>();
+                auto events = vector<Event>();
                 for (auto strike: rally["list"]) {
                     auto attrs = vector<int>();
 

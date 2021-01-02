@@ -2,41 +2,55 @@
 #include "FileLoader.hpp"
 #include <time.h>
 
+#include "Fmp.hpp"
+
 using namespace std;
 
+list<Sequence> FMP::sequenceList = {};
+int Pattern::totalTimeStamp = 0;
+set<Pattern, Pattern::codeTableSetComp> FMP::codeTable = {};
+const int Sequence::coverMissFlag = -1;
+const int Pattern::patternNULLFlag = -1;
+
 int main() {
-    string dir = "./data/tt/";
+    string dir = "../data/tt/";
     vector<string> files = {
-            "20180324 µÂ¹ú¹«¿ªÈü Å®µ¥µÚ¶şÂÖ ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-            "20180526 ÖĞ¹úÏã¸Û¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20180602 ÖĞ¹ú¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20180610 ÈÕ±¾¹«¿ªÈü Å®µ¥¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20180727 °Ä´óÀûÑÇ¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ºÎ×¿¼ÑvsÒÁÌÙÃÀ³Ï-data.json",
-            "20181103 Èğµä¹«¿ªÈü Å®µ¥°ë›QÈü ¶¡ÄşvsÒÁÌÙÃÀ³Ï-data.json",
-            "20181103 Èğµä¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÁõÊ«ö©vsÒÁÌÙÃÀ³Ï-data.json",
-            "20181104 Èğµä¹«¿ªÈü Å®µ¥¾öÈü ÖìÓêÁávsÒÁÌÙÃÀ³Ï-data.json",
-            "20190330 ¿¨Ëş¶û¹«¿ªÈü Å®µ¥°Ë·ÖÖ®Ò»¾öÈü ¶¡ÄşvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190424 ²¼´ïÅåË¹ÊÀÆ¹Èü Å®µ¥Ê®Áù·ÖÖ®Ò»¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-            "20190530 ÖĞ¹ú¹«¿ªÈü Å®µ¥Ê®Áù·ÖÖ®Ò»¾öÈü ÍõÒÕµÏvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190601 ÖĞ¹ú¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ¶¡ÄşvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190602 ÖĞ¹ú¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190609 Ïã¸Û¹«¿ªÈü Å®µ¥¾öÈü ÍõÒÕµÏvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190706 º«¹ú¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190713 °Ä´óÀûÑÇ¹«¿ªÈü Å®µ¥°ë¾öÈü ¶¡ÄşvsÒÁÌÙÃÀ³Ï-data.json",
-            "20190818 ±£¼ÓÀûÑÇ¹«¿ªÈü Å®µ¥°ë¾öÈü ³ÂĞÒÍ¬vsÒÁÌÙÃÀ³Ï-data.json",
-            "20190824 ½İ¿Ë¹«¿ªÈü Å®µ¥°Ë·ÖÖ®Ò»¾öÈü ³ÂĞÒÍ¬vsÒÁÌÙÃÀ³Ï-data.json",
-            "20191005 Èğµä¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-            "20191006 Èğµä¹«¿ªÈü Å®µ¥¾öÈü ³ÂÃÎvsÒÁÌÙÃÀ³Ï-data.json",
-            "20191006 Èğµä¹«¿ªÈü Å®µ¥°ë¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-            "20191013 µÂ¹ú¹«¿ªÈü Å®µ¥¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json"
+            "20180324 å¾·å›½å…¬å¼€èµ› å¥³å•ç¬¬äºŒè½® å­™é¢–èvsä¼Šè—¤ç¾è¯š-data.json",
+            "20180526 ä¸­å›½é¦™æ¸¯å…¬å¼€èµ› å¥³å•åŠå†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20180602 ä¸­å›½å…¬å¼€èµ› å¥³å•åŠå†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20180610 æ—¥æœ¬å…¬å¼€èµ› å¥³å•å†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20180727 æ¾³å¤§åˆ©äºšå…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ä½•å“ä½³vsä¼Šè—¤ç¾è¯š-data.json",
+            "20181103 ç‘å…¸å…¬å¼€èµ› å¥³å•åŠæ±ºèµ› ä¸å®vsä¼Šè—¤ç¾è¯š-data.json",
+            "20181103 ç‘å…¸å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› åˆ˜è¯—é›¯vsä¼Šè—¤ç¾è¯š-data.json",
+            "20181104 ç‘å…¸å…¬å¼€èµ› å¥³å•å†³èµ› æœ±é›¨ç²vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190330 å¡å¡”å°”å…¬å¼€èµ› å¥³å•å…«åˆ†ä¹‹ä¸€å†³èµ› ä¸å®vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190424 å¸ƒè¾¾ä½©æ–¯ä¸–ä¹’èµ› å¥³å•åå…­åˆ†ä¹‹ä¸€å†³èµ› å­™é¢–èvsä¼Šè—¤ç¾è¯š-data.json",
+            "20190530 ä¸­å›½å…¬å¼€èµ› å¥³å•åå…­åˆ†ä¹‹ä¸€å†³èµ› ç‹è‰ºè¿ªvsä¼Šè—¤ç¾è¯š-data.json",
+            "20190601 ä¸­å›½å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ä¸å®vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190602 ä¸­å›½å…¬å¼€èµ› å¥³å•åŠå†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190609 é¦™æ¸¯å…¬å¼€èµ› å¥³å•å†³èµ› ç‹è‰ºè¿ªvsä¼Šè—¤ç¾è¯š-data.json",
+            "20190706 éŸ©å›½å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190713 æ¾³å¤§åˆ©äºšå…¬å¼€èµ› å¥³å•åŠå†³èµ› ä¸å®vsä¼Šè—¤ç¾è¯š-data.json",
+            "20190818 ä¿åŠ åˆ©äºšå…¬å¼€èµ› å¥³å•åŠå†³èµ› é™ˆå¹¸åŒvsä¼Šè—¤ç¾è¯š-data.json",
+            "20190824 æ·å…‹å…¬å¼€èµ› å¥³å•å…«åˆ†ä¹‹ä¸€å†³èµ› é™ˆå¹¸åŒvsä¼Šè—¤ç¾è¯š-data.json",
+            "20191005 ç‘å…¸å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ç‹æ›¼æ˜±vsä¼Šè—¤ç¾è¯š-data.json",
+            "20191006 ç‘å…¸å…¬å¼€èµ› å¥³å•å†³èµ› é™ˆæ¢¦vsä¼Šè—¤ç¾è¯š-data.json",
+            "20191006 ç‘å…¸å…¬å¼€èµ› å¥³å•åŠå†³èµ› å­™é¢–èvsä¼Šè—¤ç¾è¯š-data.json",
+            "20191013 å¾·å›½å…¬å¼€èµ› å¥³å•å†³èµ› å­™é¢–èvsä¼Šè—¤ç¾è¯š-data.json"
     };
-    list<Sequence> sequenceList = {};
     clock_t t1 = clock();
     for (const auto& file: files)
-        sequenceList.splice(sequenceList.end(), FileLoader::loadFile(dir + file, FileType::TableTennis));
+        FMP::sequenceList.splice(FMP::sequenceList.end(), FileLoader::loadFile(dir + file, FileType::TableTennis));
     cout << "Finish Loading! Used time: " << (clock() - t1) * 1.0 / CLOCKS_PER_SEC << "s" << endl << endl;
     cout << "Attribute mapping:" << endl << Attribute::get_record() << endl;
-    cout << "Total sequences: " << sequenceList.size() << endl;
+    cout << "Total sequences: " << FMP::sequenceList.size() << endl;
+    auto seq = *(FMP::sequenceList.begin());
+    cout << seq << endl;
+    seq = *(FMP::sequenceList.rbegin());
+    cout << seq << endl;
+    t1 = clock();
+    FMP::do_fmp();
+    cout << endl << "Finish FMP! Used time: " << (clock() - t1) * 1.0 / CLOCKS_PER_SEC << "s" << endl << endl;
 //    for (auto sequence = sequenceList.begin(); sequence != sequenceList.end(); sequence++)
 //        cout << distance(sequenceList.begin(), sequence) << "\t: " << *sequence << endl;
 }
