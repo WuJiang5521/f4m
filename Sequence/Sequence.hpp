@@ -5,9 +5,9 @@
 #ifndef FMP_SEQUENCE_HPP
 #define FMP_SEQUENCE_HPP
 
-
+#include <iostream>
 #include <list>
-#include "Event.hpp"
+#include "Event/Event.hpp"
 
 class Sequence {
 public:

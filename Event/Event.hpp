@@ -5,9 +5,9 @@
 #ifndef FMP_EVENT_HPP
 #define FMP_EVENT_HPP
 
-
+#include <iostream>
 #include <list>
-#include "Attribute.hpp"
+#include "Attribute/Attribute.hpp"
 
 class Event {
 public:
