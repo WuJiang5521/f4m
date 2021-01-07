@@ -2,13 +2,14 @@
 #include "FileLoader.hpp"
 #include <time.h>
 
+#include "Types.h"
 #include "Fmp.hpp"
 
 using namespace std;
 
 list<Sequence> FMP::sequenceList = {};
 int Pattern::totalTimeStamp = 0;
-set<Pattern, Pattern::codeTableSetComp> FMP::codeTable = {};
+CodeTableType FMP::codeTable = {};
 const int Sequence::coverMissFlag = -1;
 const int Pattern::patternNULLFlag = -1;
 

@@ -11,18 +11,21 @@
 #include <set>
 #include "../Event/Event.hpp"
 #include "../Pattern/Pattern.hpp"
+#include "../Types.h"
 
 class Sequence {
+private:
+    typedef std::pair<std::pair<int, int>, std::vector<int> > OccurType;
 public:
     explicit Sequence(std::vector<Event> );
     friend std::ostream & operator <<(std::ostream &out, const Sequence &sequence);
 
-    void getCover(std::set<Pattern, Pattern::codeTableSetComp> &PS);
+    void getCover(CodeTableType &PS);
 
     static const int coverMissFlag;
 
     struct occurSetComp {
-        bool operator() (const std::pair<int, std::vector<int> > &a, const std::pair<int, std::vector<int> > & b);
+        bool operator() (const OccurType &a, const OccurType & b);
     };
 
     int size() const;
@@ -32,8 +35,10 @@ public:
 private:
     std::vector<Event> events;
 
-    void getOccur(std::set<std::pair<int, std::vector<int> >, occurSetComp> &, const Pattern &);
-    bool hasInterSection(const std::pair<int, std::vector<int> > &, const Pattern &) const;
+    typedef std::set<std::pair<std::pair<int, int>, std::vector<int> >, occurSetComp> OccursType;
+
+    void getOccur(OccursType &, const Pattern &) const;
+    bool hasInterSection(const OccurType &, const Pattern &) const;
     bool coverIsFull() const;
 };
 

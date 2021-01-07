@@ -16,8 +16,11 @@ public:
     static std::string get_key_value(const std::string &key, int attr);
 
     static std::string get_record();
+    static const std::vector<std::string> & get_keys();
+    static const std::vector<std::string> & get_attrs(const std::string &);
 
 private:
+    static std::vector<std::string> keys;
     static std::map<std::string, std::map<std::string, int>> mapping;
     static std::map<std::string, std::vector<std::string>> record;
 };

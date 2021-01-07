@@ -23,11 +23,37 @@ int Pattern::size() const {
 
 Pattern::Pattern(std::vector<Event>  segments) : pattern(move(segments)) {
     timeStamp = totalTimeStamp++;
+    usg = 0;
 }
 
-bool Pattern::codeTableSetComp::operator()(const Pattern &a, const Pattern &b) const {
-    if (a.size() == b.size()) {
-        return a.timeStamp < b.timeStamp;
+bool Pattern::codeTableSetComp::operator()(const Pattern* const &a, const Pattern* const &b) const {
+    if (a->size() == b->size()) {
+        return a->timeStamp < b->timeStamp;
     }
-    return a.size() > b.size();
+    return a->size() > b->size();
+}
+
+int Pattern::getUsage() const {
+    return usg;
+}
+
+int Pattern::getGaps() const {
+    return gaps;
+}
+
+int Pattern::getFills() const {
+    return fills;
+}
+
+void Pattern::clearCnts() {
+    usg = 0;
+    gaps = 0;
+    fills = 0;
+}
+
+std::vector<Event>::iterator Pattern::begin() {
+    return pattern.begin();
+}
+std::vector<Event>::iterator Pattern::end() {
+    return pattern.end();
 }

@@ -20,7 +20,7 @@ ostream &operator<<(ostream &out, const Sequence &sequence) {
     return out;
 }
 
-void Sequence::getOccur(std::set<std::pair<int, std::vector<int> >, occurSetComp> & occurs, const Pattern & X) {
+void Sequence::getOccur(OccursType & occurs, const Pattern & X) const {
     for (int i = 0; i < events.size(); ++i) {
         std::vector<int> aCover = {};
         int j = i, xId = 0, countGap = 0;
@@ -36,13 +36,13 @@ void Sequence::getOccur(std::set<std::pair<int, std::vector<int> >, occurSetComp
             }
         }
         if (xId == X.size()) {
-            occurs.insert(make_pair(i, aCover));
+            occurs.insert(make_pair(make_pair(i, countGap), aCover));
         }
     }
 }
 
-bool Sequence::hasInterSection(const std::pair<int, std::vector<int> > & occur, const Pattern & X) const {
-    int occurAt = occur.first;
+bool Sequence::hasInterSection(const OccurType & occur, const Pattern & X) const {
+    int occurAt = occur.first.first;
     for (auto it = occur.second.begin(); it != occur.second.begin(); ++it, occurAt++) {
         if (*it == coverMissFlag) {
             continue;
@@ -67,34 +67,38 @@ bool Sequence::coverIsFull() const {
     return true;
 }
 
-void Sequence::getCover(set<Pattern, Pattern::codeTableSetComp> &PS) {
+void Sequence::getCover(CodeTableType &PS) {
     int pi = 0;
     auto it = PS.begin();
     for (; it != PS.end(); ++it, pi++) {
-        set<pair<int, vector<int> >, occurSetComp> occurs;
-        getOccur(occurs, *it);
+        OccursType occurs = {};
+        getOccur(occurs, **it);
         for (const auto & occur : occurs) {
-            if (!hasInterSection(occur, *it)) {
-                int occurAt = occur.first;
+            if (!hasInterSection(occur, **it)) {
+                int occurAt = occur.first.first;
+                int gaps = occur.first.second;
                 for (auto occurIt = occur.second.begin(); occurIt != occur.second.end(); ++occurIt, occurAt++) {
                     if (*occurIt == coverMissFlag) {
                         continue;
                     }
                     for (int j = 0; j < cover[occurAt].size(); ++j) {
-                        if ((*it)[*occurIt][j] != Pattern::patternNULLFlag) {
-                            cover[occurAt][j].first = &(*it);
+                        if ((**it)[*occurIt][j] != Pattern::patternNULLFlag) {
+                            cover[occurAt][j].first = &(**it);
                             cover[occurAt][j].second = *occurIt;
                         }
                     }
                 }
+                (*it)->gaps += gaps;
+                (*it)->fills += (*it)->size() - 1;
+                (*it)->usg++;
             }
         }
         if (coverIsFull()) break;
     }
 }
 
-bool Sequence::occurSetComp::operator()(const std::pair<int, std::vector<int> > &a,
-                                        const std::pair<int, std::vector<int> > &b) {
+bool Sequence::occurSetComp::operator()(const OccurType &a,
+                                        const OccurType &b) {
     return a.second.size() < b.second.size();
 }
 
