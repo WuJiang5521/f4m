@@ -19,6 +19,22 @@ ostream &operator<<(ostream &out, const Sequence &sequence) {
         out << (i == sequence.events.begin() ? "" : ", ") << *i;
     return out;
 }
+//Sequence & Sequence::operator=(const Sequence & a) {
+//    for (int i = 0; i < cover.size(); ++i) {
+//        for (int j = 0; j < cover[i].size(); ++j) {
+//            cover[i][j].first = a.cover[i][j].first;
+//            cover[i][j].second = a.cover[i][j].second;
+//        }
+//    }
+//    return *this;
+//}
+
+vector<Event>::iterator Sequence::begin() {
+    return events.begin();
+}
+vector<Event>::iterator Sequence::end() {
+    return events.end();
+}
 
 void Sequence::getOccur(OccursType & occurs, const Pattern & X) const {
     for (int i = 0; i < events.size(); ++i) {
@@ -43,7 +59,7 @@ void Sequence::getOccur(OccursType & occurs, const Pattern & X) const {
 
 bool Sequence::hasInterSection(const OccurType & occur, const Pattern & X) const {
     int occurAt = occur.first.first;
-    for (auto it = occur.second.begin(); it != occur.second.begin(); ++it, occurAt++) {
+    for (auto it = occur.second.begin(); it != occur.second.end(); ++it, occurAt++) {
         if (*it == coverMissFlag) {
             continue;
         }
@@ -68,11 +84,22 @@ bool Sequence::coverIsFull() const {
 }
 
 void Sequence::getCover(CodeTableType &PS) {
+    coverPattern.clear();
+    for (int i = 0; i < cover.size(); ++i) {
+        for (int j = 0; j < cover[i].size(); ++j) {
+            cover[i][j].first = nullptr;
+            cover[i][j].second = -1;
+        }
+    }
     int pi = 0;
     auto it = PS.begin();
     for (; it != PS.end(); ++it, pi++) {
+        if ((*it)->disabled) {
+            continue;
+        }
         OccursType occurs = {};
         getOccur(occurs, **it);
+        bool counted = false;
         for (const auto & occur : occurs) {
             if (!hasInterSection(occur, **it)) {
                 int occurAt = occur.first.first;
@@ -91,6 +118,31 @@ void Sequence::getCover(CodeTableType &PS) {
                 (*it)->gaps += gaps;
                 (*it)->fills += (*it)->size() - 1;
                 (*it)->usg++;
+                if (coverPattern.find(*it) != coverPattern.end()) {
+                    coverPattern[*it].push_back(occurAt);
+                } else {
+                    coverPattern[*it] = {occurAt};
+                }
+                if (!counted) {
+                    counted = true;
+                    for (auto & p : coverPattern) {
+                        if (p.first == *it) {
+                            continue;
+                        }
+                        int minDis = accumulate(p.second.begin(), p.second.end(), 100000, [occurAt](int minn, int a) {
+                           int absul = occurAt - a > 0 ? occurAt - a : a - occurAt;
+                           return minn > absul ? absul : minn;
+                        });
+                        if (minDis <= p.first->size() + (*it)->size()) {
+                            if (P_PTable::table[p.first].find(*it) != P_PTable::table[p.first].end()) {
+                                P_PTable::table[p.first][*it]++;
+                            }
+                            if (P_PTable::table[*it].find(p.first) != P_PTable::table[*it].end()) {
+                                P_PTable::table[*it][p.first]++;
+                            }
+                        }
+                    }
+                }
             }
         }
         if (coverIsFull()) break;
@@ -99,6 +151,9 @@ void Sequence::getCover(CodeTableType &PS) {
 
 bool Sequence::occurSetComp::operator()(const OccurType &a,
                                         const OccurType &b) {
+    if (a.second.size() == b.second.size()) {
+        return a.first.first < b.first.first;
+    }
     return a.second.size() < b.second.size();
 }
 

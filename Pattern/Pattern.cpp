@@ -24,6 +24,12 @@ int Pattern::size() const {
 Pattern::Pattern(std::vector<Event>  segments) : pattern(move(segments)) {
     timeStamp = totalTimeStamp++;
     usg = 0;
+    gaps = 0;
+    fills = 0;
+    oldUsg = 0;
+    oldGaps = 0;
+    oldFills = 0;
+    disabled = false;
 }
 
 bool Pattern::codeTableSetComp::operator()(const Pattern* const &a, const Pattern* const &b) const {
@@ -45,6 +51,19 @@ int Pattern::getFills() const {
     return fills;
 }
 
+void Pattern::rollback() {
+    usg = oldUsg;
+    gaps = oldGaps;
+    fills = oldFills;
+}
+
+void Pattern::checkup() {
+    oldUsg = usg;
+    oldGaps = gaps;
+    oldFills = fills;
+}
+
+
 void Pattern::clearCnts() {
     usg = 0;
     gaps = 0;
@@ -56,4 +75,8 @@ std::vector<Event>::iterator Pattern::begin() {
 }
 std::vector<Event>::iterator Pattern::end() {
     return pattern.end();
+}
+
+void Pattern::push_back(const Event & e) {
+    pattern.push_back(e);
 }

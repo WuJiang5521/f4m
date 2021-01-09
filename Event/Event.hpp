@@ -16,7 +16,7 @@ public:
 
     int& operator [](int i);
     int operator [](int i) const;
-    int size() const;
+    [[nodiscard]] int size() const;
 
     bool operator ==(const Event & e) const;
 

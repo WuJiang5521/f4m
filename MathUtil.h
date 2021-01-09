@@ -30,6 +30,9 @@ public:
 
     static double lg_choose(int n, int k) {
         update_lg_fact((n > k ? n : k));
+        if (n < k) {
+            return 0;
+        }
         return lg_fact[n] - lg_fact[k] - lg_fact[n - k];
     }
     static double lg_factorial(int n) {
@@ -55,10 +58,6 @@ public:
     }
 };
 
-int MathUtil::lg_fact_top = 0;
-int MathUtil::pow2_top = 0;
-std::vector<double> MathUtil::lg_fact(1);
-std::vector<int> MathUtil::pow2(1);
 
 
 #endif //FMP_MATHUTIL_H
