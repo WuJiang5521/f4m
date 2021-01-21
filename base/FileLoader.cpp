@@ -10,20 +10,20 @@
 using namespace std;
 using json = nlohmann::json;
 
-list<BaseSequence> extract_tt_sequences(json j) {
+list<FMPSequence> extract_tt_sequences(json j) {
     try {
-        list<BaseSequence> sequenceList = list<BaseSequence>();
+        list<FMPSequence> sequenceList = list<FMPSequence>();
 
         for (auto game: j["record"]["list"]) {
             for (auto rally: game["list"]) {
-                auto events = vector<BaseEvent>();
+                auto events = vector<FMPEvent>();
                 for (auto strike: rally["list"]) {
                     auto attrs = vector<int>();
 
-                    attrs.push_back(BaseAttribute::from_key_value("ttBallPosition", strike["BallPosition"]));
-                    attrs.push_back(BaseAttribute::from_key_value("ttStrikePosition", strike["StrikePosition"]));
-                    attrs.push_back(BaseAttribute::from_key_value("ttStrikeTech", strike["StrikeTech"]));
-                    attrs.push_back(BaseAttribute::from_key_value("ttSpinKind", strike["SpinKind"]));
+                    attrs.push_back(FMPAttribute::from_key_value("ttBallPosition", strike["BallPosition"]));
+                    attrs.push_back(FMPAttribute::from_key_value("ttStrikePosition", strike["StrikePosition"]));
+                    attrs.push_back(FMPAttribute::from_key_value("ttStrikeTech", strike["StrikeTech"]));
+                    attrs.push_back(FMPAttribute::from_key_value("ttSpinKind", strike["SpinKind"]));
 
                     events.emplace_back(attrs);
                 }
@@ -37,7 +37,7 @@ list<BaseSequence> extract_tt_sequences(json j) {
     }
 }
 
-list<BaseSequence> FileLoader::loadFile(const string& fileName, FileType fileType) {
+list<FMPSequence> FileLoader::loadFile(const string& fileName, FileType fileType) {
     try {
         ifstream file(fileName, ios::in);
         if (!file.is_open())
@@ -55,6 +55,6 @@ list<BaseSequence> FileLoader::loadFile(const string& fileName, FileType fileTyp
         }
     } catch (exception &msg) {
         cout << "Error: " << msg.what() << endl;
-        return list<BaseSequence>();
+        return list<FMPSequence>();
     }
 }

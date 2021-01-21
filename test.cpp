@@ -6,13 +6,13 @@
 
 using namespace std;
 
-list<BaseSequence> FMP::sequenceList = {};
+list<FMPSequence> FMP::sequenceList = {};
 int FmpPattern::totalTimeStamp = 0;
 CodeTableType FMP::codeTable = {};
 
 void test_ditto();
 
-const int BaseSequence::coverMissFlag = -1;
+const int FMPSequence::coverMissFlag = -1;
 const int FmpPattern::patternNULLFlag = -1;
 
 void load_file() {
@@ -45,7 +45,7 @@ void load_file() {
     for (const auto &file: files)
         FMP::sequenceList.splice(FMP::sequenceList.end(), FileLoader::loadFile(dir + file, FileType::TableTennis));
     cout << "Finish Loading! Used time: " << (clock() - t1) * 1.0 / CLOCKS_PER_SEC << "s" << endl << endl;
-    cout << "BaseAttribute mapping:" << endl << BaseAttribute::get_record() << endl;
+    cout << "FMPAttribute mapping:" << endl << FMPAttribute::get_record() << endl;
     cout << "Total sequences: " << FMP::sequenceList.size() << endl;
 }
 
@@ -60,15 +60,16 @@ void test_ditto() {
     string filename = "temp.dat";
     ofstream f;
     f.open(filename, ios::out);
-    auto attrs = BaseAttribute::get_keys();
+    auto attrs = FMPAttribute::get_keys();
     int nrAttr = attrs.size();
     f << nrAttr;
     for (const auto &attr: attrs)
-        f << " " << BaseAttribute::get_attrs(attr).size();
+        f << " " << FMPAttribute::get_attrs(attr).size();
     for (int i = 0; i < nrAttr; i++) {
         f << endl;
-        for (auto sequence: FMP::sequenceList) {
-            for (auto &event : sequence) {
+        for (auto sequence = FMP::sequenceList.begin(); sequence != FMP::sequenceList.end(); sequence++) {
+            if (sequence != FMP::sequenceList.begin()) f << -1 << " ";
+            for (auto &event : (*sequence)) {
                 f << event[i] << " ";
             }
         }
@@ -91,10 +92,6 @@ void test_ditto() {
     clock_t t1 = clock();
     dittoEnter(argc, argv);
     cout << endl << "Finish DITTO! Used time: " << (clock() - t1) * 1.0 / CLOCKS_PER_SEC << "s" << endl << endl;
-
-//    clock_t t1 = clock();
-//    system(("..\\DITTO\\Ditto.exe -i " + filename + " -w true").c_str());
-//    cout << endl << "Finish DITTO! Used time: " << (clock() - t1) * 1.0 / CLOCKS_PER_SEC << "s" << endl << endl;
     //endregion
 
     //region remove temp file

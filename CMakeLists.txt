@@ -6,13 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(
         fmp
         test.cpp
-        base/BaseSequence.cpp base/BaseSequence.hpp
+        FMP/Sequence/FMPSequence.cpp FMP/Sequence/FMPSequence.hpp
         base/json.hpp
         FMP/Pattern/FmpPattern.cpp FMP/Pattern/FmpPattern.hpp
         FMP/Fmp.cpp FMP/Fmp.hpp
         base/FileLoader.cpp base/FileLoader.hpp
-        base/BaseEvent.cpp base/BaseEvent.hpp
-        base/BaseAttribute.cpp base/BaseAttribute.hpp
+        FMP/Event/FMPEvent.cpp FMP/Event/FMPEvent.hpp
+        FMP/Attribute/FMPAttribute.cpp FMP/Attribute/FMPAttribute.hpp
         FMP/MathUtil.h FMP/MathUtil.cpp
         FMP/P_PTable/P_PTable.cpp
 

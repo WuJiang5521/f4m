@@ -8,12 +8,12 @@
 
 using namespace std;
 
-BaseEvent& FmpPattern::operator[](int i) {
+FMPEvent& FmpPattern::operator[](int i) {
     return pattern[i];
 }
 
 
-const BaseEvent& FmpPattern::operator[](int i) const {
+const FMPEvent& FmpPattern::operator[](int i) const {
     return pattern[i];
 }
 
@@ -21,7 +21,7 @@ int FmpPattern::size() const {
     return pattern.size();
 }
 
-FmpPattern::FmpPattern(std::vector<BaseEvent>  segments) : pattern(move(segments)) {
+FmpPattern::FmpPattern(std::vector<FMPEvent>  segments) : pattern(move(segments)) {
     timeStamp = totalTimeStamp++;
     usg = 0;
     gaps = 0;
@@ -70,13 +70,13 @@ void FmpPattern::clearCnts() {
     fills = 0;
 }
 
-std::vector<BaseEvent>::iterator FmpPattern::begin() {
+std::vector<FMPEvent>::iterator FmpPattern::begin() {
     return pattern.begin();
 }
-std::vector<BaseEvent>::iterator FmpPattern::end() {
+std::vector<FMPEvent>::iterator FmpPattern::end() {
     return pattern.end();
 }
 
-void FmpPattern::push_back(const BaseEvent & e) {
+void FmpPattern::push_back(const FMPEvent & e) {
     pattern.push_back(e);
 }

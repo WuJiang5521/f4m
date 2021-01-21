@@ -7,7 +7,7 @@
 
 #include <list>
 #include <fstream>
-#include "BaseSequence.hpp"
+#include "../FMP/Sequence/FMPSequence.hpp"
 
 enum FileType {
     TableTennis,
@@ -15,7 +15,7 @@ enum FileType {
 
 class FileLoader {
 public:
-    static std::list<BaseSequence> loadFile(const std::string& fileName, FileType fileType);
+    static std::list<FMPSequence> loadFile(const std::string& fileName, FileType fileType);
 };
 
 #endif //FMP_FILELOADER_HPP

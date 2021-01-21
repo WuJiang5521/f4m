@@ -8,17 +8,17 @@
 
 #include <list>
 #include <set>
-#include "../../base/BaseEvent.hpp"
+#include "../Event/FMPEvent.hpp"
 
 class FmpPattern {
 public:
-    explicit FmpPattern(std::vector<BaseEvent>  );
-    BaseEvent& operator[] (int i);
+    explicit FmpPattern(std::vector<FMPEvent>  );
+    FMPEvent& operator[] (int i);
     [[nodiscard]] int size() const;
-    std::vector<BaseEvent>::iterator begin();
-    std::vector<BaseEvent>::iterator end();
-    void push_back(const BaseEvent &);
-    const BaseEvent& operator[] (int i) const;
+    std::vector<FMPEvent>::iterator begin();
+    std::vector<FMPEvent>::iterator end();
+    void push_back(const FMPEvent &);
+    const FMPEvent& operator[] (int i) const;
     static const int patternNULLFlag;
     struct codeTableSetComp {
         bool operator ()(const FmpPattern* const & a, const FmpPattern* const &b) const;
@@ -31,10 +31,10 @@ public:
     void checkup();
     static int totalTimeStamp;
     int timeStamp;
-    friend class BaseSequence;
+    friend class FMPSequence;
     friend class FMP;
 private:
-    std::vector<BaseEvent> pattern;
+    std::vector<FMPEvent> pattern;
     int usg, gaps, fills;
     int oldUsg, oldGaps, oldFills;
     bool disabled;

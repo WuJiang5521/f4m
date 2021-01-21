@@ -5,16 +5,16 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
-#include "BaseAttribute.hpp"
+#include "FMPAttribute.hpp"
 
 using namespace std;
 
 
-map<string, vector<string>> BaseAttribute::record = map<string, vector<string>>();
-map<string, map<string, int>> BaseAttribute::mapping = map<string, map<string, int>>();
-vector<string> BaseAttribute::keys = vector<string>();
+map<string, vector<string>> FMPAttribute::record = map<string, vector<string>>();
+map<string, map<string, int>> FMPAttribute::mapping = map<string, map<string, int>>();
+vector<string> FMPAttribute::keys = vector<string>();
 
-int BaseAttribute::from_key_value(const string &key, const string &value) {
+int FMPAttribute::from_key_value(const string &key, const string &value) {
     if (record.count(key) == 0) {
         keys.push_back(key);
         record.insert(pair<string, vector<string>>(key, vector<string>()));
@@ -33,16 +33,16 @@ int BaseAttribute::from_key_value(const string &key, const string &value) {
     }
 }
 
-const vector<string> & BaseAttribute::get_keys() {
+const vector<string> & FMPAttribute::get_keys() {
     return keys;
 }
 
-const vector<string> & BaseAttribute::get_attrs(const string & key) {
+const vector<string> & FMPAttribute::get_attrs(const string & key) {
     return record[key];
 }
 
 
-string BaseAttribute::get_key_value(const string &key, const int attr) {
+string FMPAttribute::get_key_value(const string &key, const int attr) {
     if (record.count(key) == 0)
         return to_string(attr);
 
@@ -51,7 +51,7 @@ string BaseAttribute::get_key_value(const string &key, const int attr) {
     else return to_string(attr);
 }
 
-string BaseAttribute::get_record() {
+string FMPAttribute::get_record() {
     stringstream ss;
     for (const auto &rec: record) {
         ss << rec.first << "\t\t: ";

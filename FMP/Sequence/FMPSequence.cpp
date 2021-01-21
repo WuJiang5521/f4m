@@ -2,11 +2,11 @@
 // Created by A on 2020/12/22.
 //
 
-#include "BaseSequence.hpp"
+#include "FMPSequence.hpp"
 
 using namespace std;
 
-BaseSequence::BaseSequence(vector<BaseEvent> events) :
+FMPSequence::FMPSequence(vector<FMPEvent> events) :
         events(move(events)) {
     cover.resize(this->events.size());
     for (int i = 0; i < cover.size(); ++i) {
@@ -14,12 +14,12 @@ BaseSequence::BaseSequence(vector<BaseEvent> events) :
     }
 }
 
-ostream &operator<<(ostream &out, const BaseSequence &sequence) {
+ostream &operator<<(ostream &out, const FMPSequence &sequence) {
     for (auto i = sequence.events.begin(); i != sequence.events.end(); i++)
         out << (i == sequence.events.begin() ? "" : ", ") << *i;
     return out;
 }
-//BaseSequence & BaseSequence::operator=(const BaseSequence & a) {
+//FMPSequence & FMPSequence::operator=(const FMPSequence & a) {
 //    for (int i = 0; i < cover.size(); ++i) {
 //        for (int j = 0; j < cover[i].size(); ++j) {
 //            cover[i][j].first = a.cover[i][j].first;
@@ -29,14 +29,14 @@ ostream &operator<<(ostream &out, const BaseSequence &sequence) {
 //    return *this;
 //}
 
-vector<BaseEvent>::iterator BaseSequence::begin() {
+vector<FMPEvent>::iterator FMPSequence::begin() {
     return events.begin();
 }
-vector<BaseEvent>::iterator BaseSequence::end() {
+vector<FMPEvent>::iterator FMPSequence::end() {
     return events.end();
 }
 
-void BaseSequence::getOccur(OccursType & occurs, const FmpPattern & X) const {
+void FMPSequence::getOccur(OccursType & occurs, const FmpPattern & X) const {
     for (int i = 0; i < events.size(); ++i) {
         std::vector<int> aCover = {};
         int j = i, xId = 0, countGap = 0;
@@ -57,7 +57,7 @@ void BaseSequence::getOccur(OccursType & occurs, const FmpPattern & X) const {
     }
 }
 
-bool BaseSequence::hasInterSection(const OccurType & occur, const FmpPattern & X) const {
+bool FMPSequence::hasInterSection(const OccurType & occur, const FmpPattern & X) const {
     int occurAt = occur.first.first;
     for (auto it = occur.second.begin(); it != occur.second.end(); ++it, occurAt++) {
         if (*it == coverMissFlag) {
@@ -72,7 +72,7 @@ bool BaseSequence::hasInterSection(const OccurType & occur, const FmpPattern & X
     return false;
 }
 
-bool BaseSequence::coverIsFull() const {
+bool FMPSequence::coverIsFull() const {
     for (const auto & i : cover) {
         for (const auto & j : i) {
             if (j.first == nullptr) {
@@ -83,7 +83,7 @@ bool BaseSequence::coverIsFull() const {
     return true;
 }
 
-void BaseSequence::getCover(CodeTableType &PS) {
+void FMPSequence::getCover(CodeTableType &PS) {
     coverPattern.clear();
     for (int i = 0; i < cover.size(); ++i) {
         for (int j = 0; j < cover[i].size(); ++j) {
@@ -149,14 +149,14 @@ void BaseSequence::getCover(CodeTableType &PS) {
     }
 }
 
-bool BaseSequence::occurSetComp::operator()(const OccurType &a,
-                                            const OccurType &b) {
+bool FMPSequence::occurSetComp::operator()(const OccurType &a,
+                                           const OccurType &b) {
     if (a.second.size() == b.second.size()) {
         return a.first.first < b.first.first;
     }
     return a.second.size() < b.second.size();
 }
 
-int BaseSequence::size() const {
+int FMPSequence::size() const {
     return events.size();
 }

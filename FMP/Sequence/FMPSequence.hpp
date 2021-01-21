@@ -2,28 +2,28 @@
 // Created by A on 2020/12/22.
 //
 
-#ifndef FMP_BASESEQUENCE_HPP
-#define FMP_BASESEQUENCE_HPP
+#ifndef FMP_FMPSEQUENCE_HPP
+#define FMP_FMPSEQUENCE_HPP
 
 #include <iostream>
 #include <list>
 #include <vector>
 #include <set>
 #include <numeric>
-#include "BaseEvent.hpp"
-#include "../FMP/Pattern/FmpPattern.hpp"
-#include "../FMP/Types.h"
-#include "../FMP/P_PTable/P_PTable.h"
+#include "../Event/FMPEvent.hpp"
+#include "../Pattern/FmpPattern.hpp"
+#include "../Types.h"
+#include "../P_PTable/P_PTable.h"
 
-class BaseSequence {
+class FMPSequence {
 private:
     typedef std::pair<std::pair<int, int>, std::vector<int> > OccurType;
 public:
-    explicit BaseSequence(std::vector<BaseEvent> );
-    std::vector<BaseEvent>::iterator begin();
-    std::vector<BaseEvent>::iterator end();
-    friend std::ostream & operator <<(std::ostream &out, const BaseSequence &sequence);
-//    BaseSequence & operator = (const BaseSequence &);
+    explicit FMPSequence(std::vector<FMPEvent> );
+    std::vector<FMPEvent>::iterator begin();
+    std::vector<FMPEvent>::iterator end();
+    friend std::ostream & operator <<(std::ostream &out, const FMPSequence &sequence);
+//    FMPSequence & operator = (const FMPSequence &);
 
     void getCover(CodeTableType &PS);
 
@@ -38,7 +38,7 @@ public:
 
 
 private:
-    std::vector<BaseEvent> events;
+    std::vector<FMPEvent> events;
     std::map<FmpPattern *, std::vector<int>> coverPattern;
 
     typedef std::set<std::pair<std::pair<int, int>, std::vector<int> >, occurSetComp> OccursType;
@@ -49,4 +49,4 @@ private:
 };
 
 
-#endif //FMP_BASESEQUENCE_HPP
+#endif //FMP_FMPSEQUENCE_HPP

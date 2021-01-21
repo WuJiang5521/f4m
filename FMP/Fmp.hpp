@@ -18,10 +18,11 @@
 #include "Types.h"
 #include "MathUtil.h"
 #include "P_PTable/P_PTable.h"
+#include "Sequence/FMPSequence.hpp"
 
 class FMP {
 public:
-    static std::list<BaseSequence> sequenceList;
+    static std::list<FMPSequence> sequenceList;
     static int max_seq_len;
     static CodeTableType codeTable;
     static int nST;
@@ -34,14 +35,14 @@ public:
 private:
     static std::vector<FmpPattern *> getCand(FmpPattern * X);
     static FmpPattern * nullPattern;
-    static void coverSequenceList(std::list<BaseSequence> &, CodeTableType &);
+    static void coverSequenceList(std::list<FMPSequence> &, CodeTableType &);
     static void checkCodeTable(CodeTableType&);
     static void clearCodeTable(CodeTableType&);
     static void rollbackCodeTable(CodeTableType&);
 
     static FmpPattern * getAlignment(FmpPattern *, FmpPattern *, int);
 
-    static void prune(std::list<BaseSequence> &, CodeTableType &, double &);
+    static void prune(std::list<FMPSequence> &, CodeTableType &, double &);
 };
 
 

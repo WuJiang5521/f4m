@@ -4,7 +4,6 @@
 
 #include <ctime>
 #include "Fmp.hpp"
-#include "../base/BaseSequence.hpp"
 
 using namespace std;
 
@@ -17,19 +16,19 @@ FmpPattern *FMP::nullPattern = nullptr;
 void FMP::do_fmp() {
     FmpPattern::totalTimeStamp = 0;
 
-    max_seq_len = accumulate(sequenceList.begin(), sequenceList.end(), -1, [](int max, BaseSequence b) {
+    max_seq_len = accumulate(sequenceList.begin(), sequenceList.end(), -1, [](int max, FMPSequence b) {
         return max > b.size() ? max : b.size();
     });
 
-    D_total_len = accumulate(sequenceList.begin(), sequenceList.end(), 0, [](int sum, BaseSequence b) {
+    D_total_len = accumulate(sequenceList.begin(), sequenceList.end(), 0, [](int sum, FMPSequence b) {
         return sum + b.size();
     });
 
-    const std::vector<std::string> &keys = BaseAttribute::get_keys();
+    const std::vector<std::string> &keys = FMPAttribute::get_keys();
 
     ST_support.resize(keys.size());
     for (int i = 0; i < keys.size(); ++i) {
-        ST_support[i].resize(BaseAttribute::get_attrs(keys[i]).size());
+        ST_support[i].resize(FMPAttribute::get_attrs(keys[i]).size());
     }
 
     for (auto &seq : sequenceList) {
@@ -42,9 +41,9 @@ void FMP::do_fmp() {
 
     int key_id = 0;
     for (auto &key : keys) {
-        const std::vector<std::string> &attrs = BaseAttribute::get_attrs(key);
+        const std::vector<std::string> &attrs = FMPAttribute::get_attrs(key);
         for (int i = 0; i < attrs.size(); ++i) {
-            BaseEvent e(std::vector<int>(keys.size(), FmpPattern::patternNULLFlag));
+            FMPEvent e(std::vector<int>(keys.size(), FmpPattern::patternNULLFlag));
             e[key_id] = i;
             auto p = new FmpPattern({e});
             codeTable.insert(p);
@@ -52,7 +51,7 @@ void FMP::do_fmp() {
         }
         ++key_id;
     }
-    nullPattern = new FmpPattern({BaseEvent(vector<int>(keys.size(), FmpPattern::patternNULLFlag))});
+    nullPattern = new FmpPattern({FMPEvent(vector<int>(keys.size(), FmpPattern::patternNULLFlag))});
     codeTable.insert(nullPattern);
     for (auto &p : codeTable) {
         P_PTable::table[p] = map<FmpPattern *, int>();
@@ -83,7 +82,7 @@ void FMP::do_fmp() {
     clock_t t_all = 0, t_cover = 0;
 
 
-    list<BaseSequence> candidateSequenceList(sequenceList);
+    list<FMPSequence> candidateSequenceList(sequenceList);
     bool is_updated;
     do {
         cout << curL << endl;
@@ -161,10 +160,10 @@ bool isSingleton(FmpPattern &X) {
     for (int i = 0; i < X[0].size(); ++i) {
         cnt += (int) (X[0][i] == FmpPattern::patternNULLFlag);
     }
-    return cnt == (BaseAttribute::get_keys().size() - 1);
+    return cnt == (FMPAttribute::get_keys().size() - 1);
 }
 
-void FMP::prune(std::list<BaseSequence> &sl, CodeTableType &table, double &curL) {
+void FMP::prune(std::list<FMPSequence> &sl, CodeTableType &table, double &curL) {
     vector<CodeTableType::iterator> pruneCands;
     for (auto Xit = table.begin(); Xit != table.end(); ++Xit) {
         auto X = *Xit;
@@ -172,7 +171,7 @@ void FMP::prune(std::list<BaseSequence> &sl, CodeTableType &table, double &curL)
             pruneCands.push_back(Xit);
         }
     }
-    std::list<BaseSequence> tmpSL(sl);
+    std::list<FMPSequence> tmpSL(sl);
     for (auto it = pruneCands.begin(); it != pruneCands.end(); ++it) {
         if (**it == nullPattern) {
             continue;
@@ -270,7 +269,7 @@ vector<FmpPattern *> FMP::getCand(FmpPattern *X) {
     return cands;
 }
 
-void FMP::coverSequenceList(list<BaseSequence> &sl, CodeTableType &table) {
+void FMP::coverSequenceList(list<FMPSequence> &sl, CodeTableType &table) {
     for (auto &seq : sl) {
         seq.getCover(table);
     }
@@ -333,13 +332,13 @@ double FMP::LCalc(CodeTableType &table) {
         }
     }));
 
-    double L_D_CT = L_Cp_CT + L_Cg_CT + MathUtil::intcost(BaseAttribute::get_keys().size())
+    double L_D_CT = L_Cp_CT + L_Cg_CT + MathUtil::intcost(FMPAttribute::get_keys().size())
                     + MathUtil::intcost(sequenceList.size())
-                    + accumulate(sequenceList.begin(), sequenceList.end(), 0.0, [](double a, const BaseSequence &b) {
+                    + accumulate(sequenceList.begin(), sequenceList.end(), 0.0, [](double a, const FMPSequence &b) {
         return a + MathUtil::intcost(b.size());
     });
 
-    auto keys = BaseAttribute::get_keys();
+    auto keys = FMPAttribute::get_keys();
     int P = table.size() - nST;
     int usageP = accumulate(table.begin(), table.end(), 0, [](int a, FmpPattern *b) {
         if (b->disabled) {
@@ -352,7 +351,7 @@ double FMP::LCalc(CodeTableType &table) {
         }
     });
     double L_key = accumulate(keys.begin(), keys.end(), 0.0, [](double a, const string &b) {
-        int Omega = BaseAttribute::get_attrs(b).size();
+        int Omega = FMPAttribute::get_attrs(b).size();
         return a + MathUtil::intcost(Omega) + MathUtil::lg_choose(max_seq_len, Omega);
     });
     double L_P = MathUtil::intcost(P + 1);
@@ -365,8 +364,8 @@ double FMP::LCalc(CodeTableType &table) {
         if (it->size() != 1 && it->getUsage() != 0) {
             double c1 = MathUtil::intcost(it->size());
             double c2 = MathUtil::intcost(it->getGaps() + 1);
-            double c3 = it->size() * log(BaseAttribute::get_keys().size());
-            double c4 = accumulate(it->begin(), it->end(), 0.0, [](double sum, BaseEvent it) {
+            double c3 = it->size() * log(FMPAttribute::get_keys().size());
+            double c4 = accumulate(it->begin(), it->end(), 0.0, [](double sum, FMPEvent it) {
                 int support_x = 0;
                 for (int i = 0; i < it.size(); ++i) {
                     if (it[i] < 0 || it[i] >= ST_support[i].size()) continue;

@@ -2,15 +2,15 @@
 // Created by A on 2020/12/22.
 //
 
-#ifndef FMP_BASEATTRIBUTE_HPP
-#define FMP_BASEATTRIBUTE_HPP
+#ifndef FMP_FMPATTRIBUTE_HPP
+#define FMP_FMPATTRIBUTE_HPP
 
 
 #include <string>
 #include <map>
 #include <vector>
 
-class BaseAttribute {
+class FMPAttribute {
 public:
     static int from_key_value(const std::string &key, const std::string &value);
     static std::string get_key_value(const std::string &key, int attr);
@@ -26,4 +26,4 @@ private:
 };
 
 
-#endif //FMP_BASEATTRIBUTE_HPP
+#endif //FMP_FMPATTRIBUTE_HPP
