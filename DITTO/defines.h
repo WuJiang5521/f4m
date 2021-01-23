@@ -5,7 +5,7 @@
 #include <vector>
 #include <set>
 #include <limits>
-#include <stdint.h>
+#include <cstdint>
 
 typedef int32_t index_t;
 const index_t index_minimal = std::numeric_limits<index_t>::min();	//minimal value for int32_t

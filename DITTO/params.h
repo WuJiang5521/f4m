@@ -2,16 +2,16 @@
 #define PARAMS_H
 
 #include <limits>
-#include <stdint.h>
+#include <cstdint>
 
 #include "defines.h"
 
 
 struct params {
-	params() : sparse(false), thresh(1) {};
+    params() : sparse(false), thresh(1) {};
 
-	bool sparse;
-	int thresh;
+    bool sparse;
+    int thresh;
 };
 
 #endif

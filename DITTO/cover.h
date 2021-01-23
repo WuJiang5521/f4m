@@ -8,33 +8,34 @@
 
 using namespace std;
 
-class Cover
-{
-	private:
-		CodeTable		*g_codeTable;
-		DittoSequence		*g_sequence;
-	
-		int				g_totalUsage;
-		double			g_szSequenceAndCT;			//total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
-		bool			otherData;					//false = we cover the data on which the Code Table is build, true = we cover other data
+class Cover {
+private:
+    CodeTable *g_codeTable;
+    DittoSequence *g_sequence;
 
-		Parameters		*par;
+    int g_totalUsage;
+    double g_szSequenceAndCT;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
+    bool otherData;                    //false = we cover the data on which the Code Table is build, true = we cover other data
 
-	public:
-		Cover(DittoSequence *s, CodeTable *ct, bool otherData);
-		~Cover(void);
-		
+    Parameters *par;
 
-		bool		checkCoverComplete();
-		void		computeTotalUsage(codeTableSet *ct);
+public:
+    Cover(DittoSequence *s, CodeTable *ct, bool otherData);
 
-		bool		coverWithDittoPatternMinWindows(DittoPattern* p);
-		bool		coverWindowWithDittoPattern(Window *w, DittoPattern *p);
+    ~Cover();
 
-		void		updateDittoPatternCodelengths(codeTableSet *ct);	//after every Cover we need to update the codelenghts, except when we use a code set to cover other/new data
+    void computeTotalUsage(codeTableSet *ct);
 
-		double		get_szSequenceAndCT() { return g_szSequenceAndCT; }
-		int			get_totalUsage() { return g_totalUsage; }
-		float*		get_outlierScorePerMev();
+    bool coverWithDittoPatternMinWindows(DittoPattern *p);
+
+    bool coverWindowWithDittoPattern(Window *w, DittoPattern *p);
+
+    void updateDittoPatternCodelengths(
+            codeTableSet *ct);    //after every Cover we need to update the codelenghts, except when we use a code set to cover other/new data
+
+    double get_szSequenceAndCT() const { return g_szSequenceAndCT; }
+
+    int get_totalUsage() const { return g_totalUsage; }
 };
+
 #endif

@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #include "stdafx.h"
 #include "mathutil.h"
 
@@ -8,60 +7,57 @@
 
 double inline
 plus(double a, double b) {
-	double c = a > b ? a : b;
-	return lg2(pw2(a - c) + pw2(b - c)) + c;
+    double c = a > b ? a : b;
+    return lg2(pw2(a - c) + pw2(b - c)) + c;
 }
 
 double inline
 diff(double a, double b) {
-	double c = a > b ? a : b;
-	return lg2(pw2(a - c) - pw2(b - c)) + c;
+    double c = a > b ? a : b;
+    return lg2(pw2(a - c) - pw2(b - c)) + c;
 }
 
 
-mathutil::mathutil(int maxElements, int maxSymbol) : lg_fact(maxElements + 1), pow2(maxSymbol + 1)
-{
-	for (int i = 2; i <= maxElements; i++)
-		lg_fact[i] = lg_fact[i - 1] + lg2(i);
+mathutil::mathutil(int maxElements, int maxSymbol) : lg_fact(maxElements + 1), pow2(maxSymbol + 1) {
+    for (int i = 2; i <= maxElements; i++)
+        lg_fact[i] = lg_fact[i - 1] + lg2(i);
 
-	pow2[0] = 1;
-	pow2[1] = 2;
-	for (int i = 2; i <= maxSymbol; i++)
-		pow2[i] = pow2[i-1] * 2;
+    pow2[0] = 1;
+    pow2[1] = 2;
+    for (int i = 2; i <= maxSymbol; i++)
+        pow2[i] = pow2[i - 1] * 2;
 }
 
-double mathutil::stirling(int n, int  k) const
-{
-	double s, ns;
+double mathutil::stirling(int n, int k) const {
+    double s, ns;
 
-	ns = s = std::numeric_limits<double>::min();
+    ns = s = std::numeric_limits<double>::min();
 
-	for (int i = 1; i <= k; i++) {
-		double term = lg_choose(k, k - i) + n * lg2(i);
+    for (int i = 1; i <= k; i++) {
+        double term = lg_choose(k, k - i) + n * lg2(i);
 
-		if ((k - i) % 2 == 1)
-			ns = plus(ns, term);
-		else
-			s = plus(s, term);
+        if ((k - i) % 2 == 1)
+            ns = plus(ns, term);
+        else
+            s = plus(s, term);
 
-		if (s > ns && ns >= 0) {
-			s = diff(s, ns);
-			ns = std::numeric_limits<double>::min();
-		}
-	}
+        if (s > ns && ns >= 0) {
+            s = diff(s, ns);
+            ns = std::numeric_limits<double>::min();
+        }
+    }
 
-	return s - lg_factorial(k);
+    return s - lg_factorial(k);
 }
 
-double mathutil::intcost(int u) const
-{
-	double c = lg2(2.865064);
-	double z = lg2(u);
+double mathutil::intcost(int u) const {
+    double c = lg2(2.865064);
+    double z = lg2(u);
 
-	while (z > 0) {
-		c += z;
-		z = lg2(z);
-	}
+    while (z > 0) {
+        c += z;
+        z = lg2(z);
+    }
 
-	return c;
+    return c;
 }
