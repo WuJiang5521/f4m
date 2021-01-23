@@ -19,7 +19,7 @@ void load_file() {
     string dir = "../data/tt/";
     vector<string> files = {
             "20180324 德国公开赛 女单第二轮 孙颖莎vs伊藤美诚-data.json",
-            "20180526 中国香港公开赛 女单半决赛 王曼昱vs伊藤美诚-data.json",
+//            "20180526 中国香港公开赛 女单半决赛 王曼昱vs伊藤美诚-data.json",
 //            "20180602 中国公开赛 女单半决赛 王曼昱vs伊藤美诚-data.json",
 //            "20180610 日本公开赛 女单决赛 王曼昱vs伊藤美诚-data.json",
 //            "20180727 澳大利亚公开赛 女单四分之一决赛 何卓佳vs伊藤美诚-data.json",
@@ -102,6 +102,7 @@ void test_ditto() {
 int main() {
     load_file();
 
-//    test_fmp();
-    test_ditto();
+    test_fmp();
+//    test_ditto();
 }
+//6891.55

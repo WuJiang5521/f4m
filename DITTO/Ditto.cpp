@@ -225,7 +225,7 @@ Ditto::Ditto(Parameters *par) : par(par)
 		double new_size = g_cover->get_szSequenceAndCT();
 		int new_total_usage = g_cover->get_totalUsage();
 
-		if(par->debug2)		g_outputStream << "current_size = " << current_usgSz->sz << "  new_size = " << new_size << endl;//DEBUG
+		cout << "current_size = " << current_usgSz->sz << "  new_size = " << new_size << endl;//DEBUG
 
 		//Check improvement
 		if(new_size < current_usgSz->sz)

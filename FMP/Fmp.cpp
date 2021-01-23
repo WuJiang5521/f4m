@@ -138,18 +138,23 @@ void FMP::do_fmp() {
             }
         }
         for (auto &c : candTable) {
-            for (auto &e : *c) {
-                cout << e << " ";
-            }
-            cout << endl;
+//            for (auto &e : *c) {
+//                cout << e << " ";
+//            }
+//            cout << endl;
             if (codeTable.find(c) == codeTable.end()) {
                 codeTable.insert(c);
             }
         }
     } while (is_updated);
+    for (auto &c : codeTable) {
+        for (auto &e : *c) {
+            cout << e << " ";
+        }
+        cout << endl;
+    }
     cout << "L time: " << t_all << endl;
     cout << "cover time: " << t_cover << endl;
-
 }
 
 bool isSingleton(FmpPattern &X) {
