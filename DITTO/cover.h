@@ -5,14 +5,16 @@
 #include "DittoPattern.h"
 #include "DittoSequence.h"
 #include "CodeTable.h"
-
+#include "P_PTable.h"
+//#ifndef FMP
+//#define FMP
+//#endif
 using namespace std;
 
 class Cover {
 private:
     CodeTable *g_codeTable;
     DittoSequence *g_sequence;
-
     int g_totalUsage;
     double g_szSequenceAndCT;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
     bool otherData;                    //false = we cover the data on which the Code Table is build, true = we cover other data

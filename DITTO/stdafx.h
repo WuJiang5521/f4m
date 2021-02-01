@@ -5,8 +5,8 @@
 
 
 #include <cstdio>
-#include <tchar.h>
-
+//#include <tchar.h>
+#include <cfloat>
 #include <list>
 #include <algorithm>
 
@@ -22,6 +22,8 @@
 #include <sstream>
 #include <string>
 #include <cstring>
+#include <ctime>
+#include <queue>
 
 static const int CATEGORICAL = 1, ITEMSET = 2;
 static const double laplace = 0;

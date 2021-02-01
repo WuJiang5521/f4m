@@ -1,12 +1,17 @@
 #include "stdafx.h"
 #include "cover.h"
-
 /*	Changes the usage of the DittoPatterns in the CodeTable as a result of the covering process
 	bool otherData: false = loop through the block's occurences, true = try to fit block on all positions in data */
 Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequence(s),
                                                                        g_codeTable(codeTable),
                                                                        otherData(otherData) {
     g_sequence->getParameters()->cntCovers++;
+#ifdef FMP
+
+    delete[] g_sequence->coverPattern;
+
+    g_sequence->coverPattern = new map<DittoPattern *, vector<int>>[g_sequence->get_nrEvents() / g_sequence->cutSize];
+#endif
 
     g_totalUsage = 0;
     g_szSequenceAndCT = 0;
@@ -70,6 +75,9 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
 
     //loop through all this block's minimal windows
     list<Window *> *lst = p->getMinWindows(g_sequence, otherData);
+#ifdef FMP
+    bool counted = false;
+#endif
 
     for (auto w : *lst) { //defines a minimal window
         if (coverWindowWithDittoPattern(w, p)) {
@@ -78,6 +86,35 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
             w->active = true;
             p->updateUsages(w->get_GapLength());
             coverComplete = g_sequence->cover(p, w);
+#ifdef FMP
+            int seq_id = w->get_mev_position(0)->id / g_sequence->cutSize;
+//            int occurAt = w->get_mev_position(0)->id % g_sequence->cutSize;
+//            if (g_sequence->coverPattern[seq_id].find(p) != g_sequence->coverPattern[seq_id].end()) {
+//                g_sequence->coverPattern[seq_id][p].push_back(occurAt);
+//            } else {
+//                g_sequence->coverPattern[seq_id][p] = {occurAt};
+//            }
+            if (!counted) {
+                for (auto &cp : g_sequence->coverPattern[seq_id]) {
+                    if (cp.first == p) {
+                        continue;
+                    }
+//                    int minDis = accumulate(cp.second.begin(), cp.second.end(), 100000, [occurAt](int minn, int a) {
+//                        int absul = occurAt - a > 0 ? occurAt - a : a - occurAt;
+//                        return minn > absul ? absul : minn;
+//                    });
+//                    if (minDis <= cp.first->getLength() + p->getLength()) {
+                        counted = true;
+                        if (P_PTable::table[cp.first].find(p) != P_PTable::table[cp.first].end()) {
+                            P_PTable::table[cp.first][p]++;
+                        }
+                        if (P_PTable::table[p].find(cp.first) != P_PTable::table[p].end()) {
+                            P_PTable::table[p][cp.first]++;
+                        }
+//                    }
+                }
+            }
+#endif
         }
 
         if (coverComplete)

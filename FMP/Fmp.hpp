@@ -4,10 +4,10 @@
 
 #ifndef FMP_FMP_HPP
 #define FMP_FMP_HPP
-
-class FMP {
-
-};
+//
+//class FMP {
+//
+//};
 
 void fmpEnter(int argc, char* argv[]);
 

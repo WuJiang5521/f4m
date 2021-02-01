@@ -8,28 +8,28 @@ using namespace std;
 int main() {
     string dir = "../data/tt/";
     vector<string> files = {
-            "20180324 µÂ¹ú¹«¿ªÈü Å®µ¥µÚ¶þÂÖ ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20180526 ÖÐ¹úÏã¸Û¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20180602 ÖÐ¹ú¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20180610 ÈÕ±¾¹«¿ªÈü Å®µ¥¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20180727 °Ä´óÀûÑÇ¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ºÎ×¿¼ÑvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20181103 Èðµä¹«¿ªÈü Å®µ¥°ë›QÈü ¶¡ÄþvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20181103 Èðµä¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÁõÊ«ö©vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20181104 Èðµä¹«¿ªÈü Å®µ¥¾öÈü ÖìÓêÁávsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190330 ¿¨Ëþ¶û¹«¿ªÈü Å®µ¥°Ë·ÖÖ®Ò»¾öÈü ¶¡ÄþvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190424 ²¼´ïÅåË¹ÊÀÆ¹Èü Å®µ¥Ê®Áù·ÖÖ®Ò»¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190530 ÖÐ¹ú¹«¿ªÈü Å®µ¥Ê®Áù·ÖÖ®Ò»¾öÈü ÍõÒÕµÏvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190601 ÖÐ¹ú¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ¶¡ÄþvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190602 ÖÐ¹ú¹«¿ªÈü Å®µ¥°ë¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190609 Ïã¸Û¹«¿ªÈü Å®µ¥¾öÈü ÍõÒÕµÏvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190706 º«¹ú¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190713 °Ä´óÀûÑÇ¹«¿ªÈü Å®µ¥°ë¾öÈü ¶¡ÄþvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190818 ±£¼ÓÀûÑÇ¹«¿ªÈü Å®µ¥°ë¾öÈü ³ÂÐÒÍ¬vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20190824 ½Ý¿Ë¹«¿ªÈü Å®µ¥°Ë·ÖÖ®Ò»¾öÈü ³ÂÐÒÍ¬vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20191005 Èðµä¹«¿ªÈü Å®µ¥ËÄ·ÖÖ®Ò»¾öÈü ÍõÂüêÅvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20191006 Èðµä¹«¿ªÈü Å®µ¥¾öÈü ³ÂÃÎvsÒÁÌÙÃÀ³Ï-data.json",
-//            "20191006 Èðµä¹«¿ªÈü Å®µ¥°ë¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json",
-//            "20191013 µÂ¹ú¹«¿ªÈü Å®µ¥¾öÈü ËïÓ±É¯vsÒÁÌÙÃÀ³Ï-data.json"
+            "20180324 å¾·å›½å…¬å¼€èµ› å¥³å•ç¬¬äºŒè½® å­™é¢–èŽŽvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20180526 ä¸­å›½é¦™æ¸¯å…¬å¼€èµ› å¥³å•åŠå†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20180602 ä¸­å›½å…¬å¼€èµ› å¥³å•åŠå†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20180610 æ—¥æœ¬å…¬å¼€èµ› å¥³å•å†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20180727 æ¾³å¤§åˆ©äºšå…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ä½•å“ä½³vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20181103 ç‘žå…¸å…¬å¼€èµ› å¥³å•åŠæ±ºèµ› ä¸å®vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20181103 ç‘žå…¸å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› åˆ˜è¯—é›¯vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20181104 ç‘žå…¸å…¬å¼€èµ› å¥³å•å†³èµ› æœ±é›¨çŽ²vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190330 å¡å¡”å°”å…¬å¼€èµ› å¥³å•å…«åˆ†ä¹‹ä¸€å†³èµ› ä¸å®vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190424 å¸ƒè¾¾ä½©æ–¯ä¸–ä¹’èµ› å¥³å•åå…­åˆ†ä¹‹ä¸€å†³èµ› å­™é¢–èŽŽvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190530 ä¸­å›½å…¬å¼€èµ› å¥³å•åå…­åˆ†ä¹‹ä¸€å†³èµ› çŽ‹è‰ºè¿ªvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190601 ä¸­å›½å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› ä¸å®vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190602 ä¸­å›½å…¬å¼€èµ› å¥³å•åŠå†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190609 é¦™æ¸¯å…¬å¼€èµ› å¥³å•å†³èµ› çŽ‹è‰ºè¿ªvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190706 éŸ©å›½å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190713 æ¾³å¤§åˆ©äºšå…¬å¼€èµ› å¥³å•åŠå†³èµ› ä¸å®vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190818 ä¿åŠ åˆ©äºšå…¬å¼€èµ› å¥³å•åŠå†³èµ› é™ˆå¹¸åŒvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20190824 æ·å…‹å…¬å¼€èµ› å¥³å•å…«åˆ†ä¹‹ä¸€å†³èµ› é™ˆå¹¸åŒvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20191005 ç‘žå…¸å…¬å¼€èµ› å¥³å•å››åˆ†ä¹‹ä¸€å†³èµ› çŽ‹æ›¼æ˜±vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20191006 ç‘žå…¸å…¬å¼€èµ› å¥³å•å†³èµ› é™ˆæ¢¦vsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20191006 ç‘žå…¸å…¬å¼€èµ› å¥³å•åŠå†³èµ› å­™é¢–èŽŽvsä¼Šè—¤ç¾Žè¯š-data.json",
+//            "20191013 å¾·å›½å…¬å¼€èµ› å¥³å•å†³èµ› å­™é¢–èŽŽvsä¼Šè—¤ç¾Žè¯š-data.json"
     };
     BaseDS::load_file(files, FileType::TableTennis, dir);
 
@@ -45,6 +45,6 @@ int main() {
     };
     int argc = sizeof(argv) / sizeof(char *);
 
-    fmpEnter(argc, argv);
+//    fmpEnter(argc, argv);
     dittoEnter(argc, argv);
 }

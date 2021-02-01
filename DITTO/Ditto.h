@@ -44,11 +44,13 @@ public:
     prunepatternSet::iterator findDittoPatternInSet(prunepatternSet *pset, DittoPattern *p);
 
     void breakDown(DittoPattern *p);
-
+#ifdef FMP
+    void generateCandidates(usgSz *current_usgSz);
+#else
     void generateCandidates(usagepatternSet::iterator *pt_ct_1, usagepatternSet::iterator *pt_ct_2,
                             usagepatternSet::iterator *pt_begin_ct, usagepatternSet::iterator *pt_end_ct,
                             usgSz *current_usgSz);
-
+#endif
     usgSz *tryVariations(DittoPattern *accepted, usgSz *current_usgSz);
 
     void loadOrBuildMinWindows(DittoPattern *p);
@@ -65,6 +67,9 @@ private:
     usagepatternSet *g_ct_on_usg;        //ordered on usage
 
     Cover *g_cover{};
+#ifdef FMP
+    priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>> *candidateOrder;
+#endif
 
     patternSet *g_whiteList;            //contains all considered candidates so we don't need to compute their support and minWindows again
     patternSet *g_blackList;            //contains all considered candidates with sup = 0

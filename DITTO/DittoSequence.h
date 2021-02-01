@@ -6,6 +6,12 @@
 #include "mathutil.h"
 #include "DittoPattern.h"
 
+#define FMP
+
+#ifdef FMP
+#include "P_PTable.h"
+#endif
+
 using namespace std;
 
 class DittoSequence {
@@ -67,6 +73,10 @@ public:
 
     bool g_debug;//DEBUG
     bool g_error;
+#ifdef FMP
+    map<DittoPattern *, vector<int>> *coverPattern;
+    const int cutSize = 20;
+#endif
 
 protected:
     Parameters *par;

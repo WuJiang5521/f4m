@@ -29,4 +29,5 @@ add_executable(
         DITTO/DittoSequence.cpp DITTO/DittoSequence.h
         DITTO/stdafx.h
         DITTO/targetver.h
+        DITTO/P_PTable.cpp
         DITTO/Window.cpp DITTO/Window.h base/BaseDS.cpp base/BaseDS.hpp FMP/Fmp.cpp FMP/Fmp.hpp)

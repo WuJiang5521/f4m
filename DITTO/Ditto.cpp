@@ -127,9 +127,9 @@ int dittoEnter(int argc, char *argv[]) {
 
     if (parameters.seq->getInputType() != CATEGORICAL)        //for now only possible for categorical data
         parameters.prune_tree = false;
-
+    clock_t t0 = clock();
     auto *ditto = new Ditto(&parameters);
-
+    cout << "DITTO time: " << (clock() - t0)*1.0/CLOCKS_PER_SEC << "s" << endl;
     delete ditto;
 
     if (!parameters.release)
@@ -151,6 +151,9 @@ Ditto::Ditto(Parameters *par) : par(par) {
     g_blackList = new patternSet;
     g_whiteList = new patternSet;
     g_ct_on_usg = new usagepatternSet;        //set to combine CTxCT based on usage
+#ifdef FMP
+    candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
+#endif
 
     //build singletons
     int **tree_ids = par->seq->get_tree_ids();
@@ -166,6 +169,14 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_ct_on_usg->insert(p);
         }
     }
+#ifdef FMP
+    for (auto & p : *(g_ct->getCT())) {
+        P_PTable::table[p] = map<DittoPattern *, int>();
+        for (auto & p1 : *(g_ct->getCT())) {
+            P_PTable::table[p][p1] = 0;
+        }
+    }
+#endif
 
     //build a tree that represents all patterns of length == 1
     //each timestep in a new candidate is run through this tree to see if it still can be frequent
@@ -176,6 +187,17 @@ Ditto::Ditto(Parameters *par) : par(par) {
     auto it_ct_1 = g_ct_on_usg->begin(), it_ct_2 = g_ct_on_usg->begin(), begin_ct = g_ct_on_usg->begin(), end_ct = g_ct_on_usg->end();    //iterators to update candidate list
 
     auto *g_cover = new Cover(par->seq, g_ct, false);    //determine ST size
+#ifdef FMP
+    delete candidateOrder;
+    candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
+    for (auto & m1 : P_PTable::table) {
+        for (auto & m2 : m1.second) {
+            candidateOrder->push(make_pair(m2.second, make_pair(m1.first, m2.first)));
+            P_PTable::generatedTable[m1.first][m2.first] = true;
+        }
+    }
+#endif
+
     auto *current_usgSz = new usgSz(g_cover->get_totalUsage(), g_cover->get_szSequenceAndCT());
 
     double STsize = current_usgSz->sz;
@@ -186,10 +208,13 @@ Ditto::Ditto(Parameters *par) : par(par) {
         if (it_ct_2 == end_ct &&
             g_cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
             break;
-
+#ifdef FMP
+        generateCandidates(current_usgSz);
+#else
         //update candidates
         generateCandidates(&it_ct_1, &it_ct_2, &begin_ct, &end_ct, current_usgSz);
-
+#endif
+//        cout << "*****" << endl;
         if (g_cand->empty())
             continue;
 
@@ -210,7 +235,13 @@ Ditto::Ditto(Parameters *par) : par(par) {
         if (!g_ct->insertDittoPattern(
                 top))                //pattern already present. NOTE this check must be after setMinWindows, because pattern equality is also based on support
             continue;                                //already present
-
+#ifdef FMP
+        P_PTable::checkTable();
+        for (auto & candp : *g_cand) {
+            P_PTable::reserveForPattern(candp);
+        }
+        P_PTable::clearTable();
+#endif
         //Cover
         g_cover = new Cover(par->seq, g_ct, false);
         double new_size = g_cover->get_szSequenceAndCT();
@@ -233,8 +264,22 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_cand->clear();
             end_ct = g_ct_on_usg->end();
             begin_ct = g_ct_on_usg->begin();
+#ifdef FMP
+            delete candidateOrder;
+            candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
+            for (auto & m1 : P_PTable::table) {
+                for (auto & m2 : m1.second) {
+                    if (P_PTable::generatedTable.find(m1.first) != P_PTable::generatedTable.end()
+                        || P_PTable::generatedTable[m1.first].find(m2.first) != P_PTable::generatedTable[m1.first].end()) {
+                        candidateOrder->push(make_pair(m2.second, make_pair(m1.first, m2.first)));
+                        P_PTable::generatedTable[m1.first][m2.first] = true;
+                    }
+                }
+            }
+#else
             it_ct_1 = codeTableSet::iterator(begin_ct);            //hard copy
             it_ct_2 = codeTableSet::iterator(begin_ct);            //hard copy
+#endif
 
             par->cntAcc++;
             g_outputStream << "top accepted: ";
@@ -243,6 +288,12 @@ Ditto::Ditto(Parameters *par) : par(par) {
             par->cntRej++;
             g_ct->deleteDittoPattern(top);
             g_ct->rollback();            //we need to rollback because all usages must be correct before we can generate more candidates
+#ifdef FMP
+            for (auto & candp : *g_cand) {
+                P_PTable::eraseForPattern(candp);
+            }
+            P_PTable::rollbackTable();
+#endif
         }
 
     }
@@ -607,7 +658,32 @@ usgSz *Ditto::tryVariations(DittoPattern *accepted, usgSz *current_usgSz) {
     delete tempCand;
     return current_usgSz;
 }
+#ifdef FMP
+void Ditto::generateCandidates(usgSz *current_usgSz) {
+    bool stop = false;
+    while (!candidateOrder->empty()) {
+        auto top = candidateOrder->top();
+        DittoPattern * p1 = top.second.first;
+        DittoPattern * p2 = top.second.second;
+        if ((p1)->getSupport() < par->minsup) {
+            candidateOrder->pop();
+            continue;
+        }
+        if ((p2)->getSupport() < par->minsup) {
+            candidateOrder->pop();
+            continue;
+        }
 
+        auto *result = new patternSet;
+        stop = combineDittoPatterns(p1, p2, current_usgSz->usg, result);
+        if (stop)
+            break;
+
+        insertCandidates(result);
+        candidateOrder->pop();
+    }
+}
+#else
 void Ditto::generateCandidates(usagepatternSet::iterator *pt_ct_1, usagepatternSet::iterator *pt_ct_2,
                                usagepatternSet::iterator *pt_begin_ct, usagepatternSet::iterator *pt_end_ct,
                                usgSz *current_usgSz) {
@@ -658,7 +734,7 @@ void Ditto::generateCandidates(usagepatternSet::iterator *pt_ct_1, usagepatternS
     }
 
 }
-
+#endif
 
 //Only adds the patterns if they are not already present
 void Ditto::insertCandidates(patternSet *plist) {
