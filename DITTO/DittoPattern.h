@@ -12,9 +12,15 @@ class DittoSequence;
 class DittoPattern {
 
 public:
+#ifdef FMP
+    DittoPattern(int l, eventSet **eventSets, DittoSequence *s, int p_id);
+
+    DittoPattern(int l, eventSet **eventSets, DittoSequence *s, int p_id, DittoPattern *x, DittoPattern *y);
+#else
     DittoPattern(int l, eventSet **eventSets, DittoSequence *s);
 
     DittoPattern(int l, eventSet **eventSets, DittoSequence *s, DittoPattern *x, DittoPattern *y);
+#endif
 
     ~DittoPattern();
 
@@ -58,6 +64,11 @@ public:
     double getCodelengthFill() const { return codelengthFill; }
 
     double getEstimatedGain() const { return estimatedGain; }
+
+#ifdef FMP
+    int getPID() const { return pattern_id; }
+    void setPID(int pid) { pattern_id = pid; }
+#endif
 
     DittoPattern *getX() { return g_x; }
 
@@ -129,6 +140,9 @@ private:
     double r_codelength, r_codelengthGap, r_codelengthFill;
     int r_usage, r_usageGap, r_usageFill;
     bool usageDecreased;
+#ifdef FMP
+    int pattern_id;
+#endif
 
 };
 

@@ -10,15 +10,18 @@
 
 class P_PTable {
 public:
-    static std::map<DittoPattern*, std::map<DittoPattern*, int>> table;
-    static std::map<DittoPattern*, std::map<DittoPattern*, int>> lastTable;
-    static void reserveForPattern(DittoPattern *);
-    static void eraseForPattern(DittoPattern *);
+    static std::vector<std::vector<int>> *table;
+    static std::vector<std::vector<int>> preTable;
+    static std::vector<std::vector<int>> lastTable;
+    static std::vector<DittoPattern*> patternIDTable;
+    static std::vector<int> prunedTable;
     static void checkTable();
-    static void clearTable();
+    static void clearTable(int size);
     static void rollbackTable();
-    static std::map<DittoPattern*, std::map<DittoPattern*, bool>> generatedTable;
+    static int generatedTable;
+    static int tableSize;
 
+    static int total_p_id;
 };
 
 

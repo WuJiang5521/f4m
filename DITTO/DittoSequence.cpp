@@ -399,15 +399,6 @@ bool DittoSequence::tryCover(Event *e, int pos) {
 
 //cover the rest of the data with singletons. Loop over all data
 void DittoSequence::coverSingletons(DittoPattern ***singletons) {
-#ifdef FMP
-//    auto **counted = new bool*[par->nrOfAttributes];
-//    for (int atr = 0; atr < par->nrOfAttributes; ++atr) {
-//        counted[atr] = new bool[par->alphabetSizes[atr]];
-//        for (int i = 0; i < par->alphabetSizes[atr]; ++i) {
-//            counted[atr][i] = false;
-//        }
-//    }
-#endif
     for (int i = 0; i < par->nrMulti_events; ++i) {
         if (isCovered[i])    //this multi-event is already covered
             continue;
@@ -418,34 +409,8 @@ void DittoSequence::coverSingletons(DittoPattern ***singletons) {
                 g_mev_time[i]->cover((*it), singletons[(*it)->attribute][(*it)->symbol]);
                 singletons[(*it)->attribute][(*it)->symbol]->updateUsages(0);
 #ifdef FMP
-                int seq_id = i / cutSize;
-                int occurAt = i % cutSize;
-                DittoPattern *p = singletons[(*it)->attribute][(*it)->symbol];
-                if (coverPattern[seq_id].find(p) != coverPattern[seq_id].end()) {
-                    coverPattern[seq_id][p].push_back(occurAt);
-                } else {
-                    coverPattern[seq_id][p] = {occurAt};
-                }
-//                if (!counted[(*it)->attribute][(*it)->symbol]) {
-                    for (auto &cp : coverPattern[seq_id]) {
-                        if (cp.first == p) {
-                            continue;
-                        }
-                        int minDis = accumulate(cp.second.begin(), cp.second.end(), 100000, [occurAt](int minn, int a) {
-                            int absul = occurAt - a > 0 ? occurAt - a : a - occurAt;
-                            return minn > absul ? absul : minn;
-                        });
-                        if (minDis <= cp.first->getLength() + p->getLength()) {
-//                            counted[(*it)->attribute][(*it)->symbol] = true;
-                            if (P_PTable::table[cp.first].find(p) != P_PTable::table[cp.first].end()) {
-                                P_PTable::table[cp.first][p]++;
-                            }
-                            if (P_PTable::table[p].find(cp.first) != P_PTable::table[p].end()) {
-                                P_PTable::table[p][cp.first]++;
-                            }
-                        }
-                    }
-//                }
+                    int seq_id = i / cutSize;
+                    coverPattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]->getPID());
 #endif
             }
         }

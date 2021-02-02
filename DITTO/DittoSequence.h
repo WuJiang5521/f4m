@@ -6,8 +6,7 @@
 #include "mathutil.h"
 #include "DittoPattern.h"
 
-#define FMP
-
+//#define FMP
 #ifdef FMP
 #include "P_PTable.h"
 #endif
@@ -74,7 +73,7 @@ public:
     bool g_debug;//DEBUG
     bool g_error;
 #ifdef FMP
-    map<DittoPattern *, vector<int>> *coverPattern;
+    set<int> *coverPattern;
     const int cutSize = 20;
 #endif
 

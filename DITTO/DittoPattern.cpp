@@ -14,6 +14,38 @@ Parameters:
 	int length:				# of time steps the pattern is long
 	eventSet **eventSets:	for each time step a pointer to set of events	
 */
+#ifdef FMP
+DittoPattern::DittoPattern(int length, eventSet **eventSets, DittoSequence *s, int p_id) : length(length), eventSets(eventSets),
+                                                                                 g_seq(s), pattern_id(p_id) {
+    if (P_PTable::patternIDTable.size() <= p_id) {
+        P_PTable::patternIDTable.resize(p_id + 1);
+    }
+    P_PTable::patternIDTable[p_id] = this;
+    g_x = nullptr;
+    g_y = nullptr;
+    init();
+    setMinWindows(s);
+}
+
+DittoPattern::DittoPattern(int length, eventSet **eventSets, DittoSequence *s, int p_id, DittoPattern *x, DittoPattern *y)
+        : length(length), eventSets(eventSets), g_seq(s), pattern_id(p_id) {
+    if (P_PTable::patternIDTable.size() <= p_id) {
+        P_PTable::patternIDTable.resize(p_id + 1);
+    }
+    P_PTable::patternIDTable[p_id] = this;
+    if (x != nullptr && y != nullptr) {
+        //Order x and y such that x is always the one ordered lower
+        if (*x > *y) {
+            g_x = y;
+            g_y = x;
+        } else {
+            g_x = x;
+            g_y = y;
+        }
+    }
+    init();
+}
+#else
 DittoPattern::DittoPattern(int length, eventSet **eventSets, DittoSequence *s) : length(length), eventSets(eventSets),
                                                                                  g_seq(s) {
     g_x = nullptr;
@@ -36,6 +68,7 @@ DittoPattern::DittoPattern(int length, eventSet **eventSets, DittoSequence *s, D
     }
     init();
 }
+#endif
 
 
 void DittoPattern::init() {
@@ -407,6 +440,11 @@ void DittoPattern::rollback() {
 }
 
 DittoPattern::~DittoPattern() {
+#ifdef FMP
+    if (pattern_id == P_PTable::total_p_id - 1) {
+        --P_PTable::total_p_id;
+    }
+#endif
     totalAIDs.clear();
 
     for (int l = 0; l < length; ++l) {

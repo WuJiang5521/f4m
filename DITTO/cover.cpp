@@ -10,7 +10,7 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
 
     delete[] g_sequence->coverPattern;
 
-    g_sequence->coverPattern = new map<DittoPattern *, vector<int>>[g_sequence->get_nrEvents() / g_sequence->cutSize];
+    g_sequence->coverPattern = new set<int>[g_sequence->get_nrEvents() / g_sequence->cutSize];
 #endif
 
     g_totalUsage = 0;
@@ -51,6 +51,17 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
 
     //cover the rest with singletons
     g_sequence->coverSingletons(singletons);
+#ifdef FMP
+    for (int seq_id = 0; seq_id < g_sequence->get_nrEvents() / g_sequence->cutSize; ++seq_id) {
+        for (auto cp1 = g_sequence->coverPattern[seq_id].begin(); cp1 != g_sequence->coverPattern[seq_id].end(); ++cp1) {
+            for (auto cp2 = cp1; cp2 != g_sequence->coverPattern[seq_id].end(); ++cp2) {
+                if (*cp1 < (*P_PTable::table).size() && *cp2 < (*P_PTable::table).size()) {
+                    (*P_PTable::table)[*cp1][*cp2]++;
+                }
+            }
+        }
+    }
+#endif
     for (int atr = 0; atr < nrAttr; ++atr)
         delete[]singletons[atr];
     delete[]singletons;
@@ -75,9 +86,6 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
 
     //loop through all this block's minimal windows
     list<Window *> *lst = p->getMinWindows(g_sequence, otherData);
-#ifdef FMP
-    bool counted = false;
-#endif
 
     for (auto w : *lst) { //defines a minimal window
         if (coverWindowWithDittoPattern(w, p)) {
@@ -88,39 +96,14 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
             coverComplete = g_sequence->cover(p, w);
 #ifdef FMP
             int seq_id = w->get_mev_position(0)->id / g_sequence->cutSize;
-//            int occurAt = w->get_mev_position(0)->id % g_sequence->cutSize;
-//            if (g_sequence->coverPattern[seq_id].find(p) != g_sequence->coverPattern[seq_id].end()) {
-//                g_sequence->coverPattern[seq_id][p].push_back(occurAt);
-//            } else {
-//                g_sequence->coverPattern[seq_id][p] = {occurAt};
-//            }
-            if (!counted) {
-                for (auto &cp : g_sequence->coverPattern[seq_id]) {
-                    if (cp.first == p) {
-                        continue;
-                    }
-//                    int minDis = accumulate(cp.second.begin(), cp.second.end(), 100000, [occurAt](int minn, int a) {
-//                        int absul = occurAt - a > 0 ? occurAt - a : a - occurAt;
-//                        return minn > absul ? absul : minn;
-//                    });
-//                    if (minDis <= cp.first->getLength() + p->getLength()) {
-                        counted = true;
-                        if (P_PTable::table[cp.first].find(p) != P_PTable::table[cp.first].end()) {
-                            P_PTable::table[cp.first][p]++;
-                        }
-                        if (P_PTable::table[p].find(cp.first) != P_PTable::table[p].end()) {
-                            P_PTable::table[p][cp.first]++;
-                        }
-//                    }
-                }
-            }
+            g_sequence->coverPattern[seq_id].insert(p->getPID());
 #endif
         }
 
         if (coverComplete)
-            return true;
+            break;
     }
-    return false;
+    return coverComplete;
 }
 
 bool Cover::coverWindowWithDittoPattern(Window *w, DittoPattern *p) {
