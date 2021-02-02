@@ -293,8 +293,9 @@ Ditto::Ditto(Parameters *par) : par(par) {
 #ifdef FMP
             delete candidateOrder;
             candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
-            for (int i = 0; i < P_PTable::total_p_id; ++i) {
-                for (int j = i; j < P_PTable::total_p_id; ++j) {
+            int tableSizeMIN = P_PTable::total_p_id < P_PTable::table->size() ? P_PTable::total_p_id : P_PTable::table->size();
+            for (int i = 0; i < tableSizeMIN; ++i) {
+                for (int j = i; j < tableSizeMIN; ++j) {
                     int idi = i < P_PTable::prunedTable.size() ? P_PTable::prunedTable[i] : i;
                     int idj = j < P_PTable::prunedTable.size() ? P_PTable::prunedTable[j] : j;
                     candidateOrder->push(make_pair((*P_PTable::table)[idi][idj],
@@ -810,7 +811,7 @@ void Ditto::insertCandidates(patternSet *plist) {
         if (deleteDittoPattern) {
 
 #ifdef FMP
-            if (p->getPID() < P_PTable::total_p_id) {
+            if (p->getPID() < P_PTable::total_p_id - 1) {
                 prunedP[p->getPID()] = true;
                 ++pruneCnt;
             }
