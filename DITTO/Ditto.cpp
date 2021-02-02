@@ -163,24 +163,22 @@ Ditto::Ditto(Parameters *par) : par(par) {
             auto **eventSets = new eventSet *[1];
             eventSets[0] = new eventSet;
             eventSets[0]->insert(new Event(sym, aid, 0, tree_ids[aid][sym]));
-#ifdef FMP
-            auto *p = new DittoPattern(1, eventSets, par->seq, P_PTable::total_p_id++);
-            P_PTable::patternIDTable.push_back(p);
-#else
             auto *p = new DittoPattern(1, eventSets, par->seq);
-#endif
             g_ct->insertDittoPattern(p);
             g_ct_on_usg->insert(p);
         }
     }
 #ifdef FMP
     vector<DittoPattern*> singletons;
+    P_PTable::patternIDMap.clear();
+    int initialPatternIDMapTop = 0;
     for (auto & p : *(g_ct->getCT())) {
         singletons.push_back(p);
+        P_PTable::patternIDMap[p] = initialPatternIDMapTop++;
+        P_PTable::patternIDTable.push_back(p);
     }
-    if (P_PTable::tableSize < P_PTable::total_p_id) {
-        P_PTable::tableSize = P_PTable::total_p_id;
-    }
+
+    P_PTable::tableSize = initialPatternIDMapTop;
     P_PTable::preTable.resize(P_PTable::tableSize);
     P_PTable::lastTable.resize(P_PTable::tableSize);
     for (int i = 0; i < P_PTable::tableSize; ++i) {
@@ -206,7 +204,6 @@ Ditto::Ditto(Parameters *par) : par(par) {
             candidateOrder->push(make_pair((*P_PTable::table)[i][j], make_pair(P_PTable::patternIDTable[i], P_PTable::patternIDTable[j])));
         }
     }
-    P_PTable::generatedTable = P_PTable::total_p_id;
 #endif
 
     auto *current_usgSz = new usgSz(g_cover->get_totalUsage(), g_cover->get_szSequenceAndCT());
@@ -216,9 +213,6 @@ Ditto::Ditto(Parameters *par) : par(par) {
     g_outputStream << g_ct->printCT(false);//DEBUG
 
     while (true) {
-#ifdef FMP
-        int store_total_p_id = P_PTable::total_p_id;
-#endif
 #ifdef FMP
         if ((candidateOrder->empty() || candidateOrder->top().first < candThreshold) &&
             g_cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
@@ -254,8 +248,15 @@ Ditto::Ditto(Parameters *par) : par(par) {
             continue;                                //already present
 #ifdef FMP
         P_PTable::checkTable();
-        if (P_PTable::tableSize < P_PTable::total_p_id) {
-            P_PTable::tableSize = P_PTable::total_p_id;
+        int patternIDMapTop = 0;
+        P_PTable::patternIDTable.clear();
+        for (auto & p : *(g_ct->getCT())) {
+            P_PTable::patternIDMap[p] = patternIDMapTop++;
+            P_PTable::patternIDTable.push_back(p);
+        }
+
+        P_PTable::tableSize = patternIDMapTop;
+        if (P_PTable::tableSize > P_PTable::preTable.size()) {
             P_PTable::preTable.resize(P_PTable::tableSize);
             P_PTable::lastTable.resize(P_PTable::tableSize);
             for (int i = 0; i < P_PTable::tableSize; ++i) {
@@ -263,7 +264,7 @@ Ditto::Ditto(Parameters *par) : par(par) {
                 P_PTable::lastTable[i].resize(P_PTable::tableSize, 0);
             }
         }
-        P_PTable::clearTable(P_PTable::total_p_id);
+        P_PTable::clearTable(P_PTable::tableSize);
 #endif
         //Cover
         clock_t t0 = clock();
@@ -293,16 +294,12 @@ Ditto::Ditto(Parameters *par) : par(par) {
 #ifdef FMP
             delete candidateOrder;
             candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
-            int tableSizeMIN = P_PTable::total_p_id < P_PTable::table->size() ? P_PTable::total_p_id : P_PTable::table->size();
-            for (int i = 0; i < tableSizeMIN; ++i) {
-                for (int j = i; j < tableSizeMIN; ++j) {
-                    int idi = i < P_PTable::prunedTable.size() ? P_PTable::prunedTable[i] : i;
-                    int idj = j < P_PTable::prunedTable.size() ? P_PTable::prunedTable[j] : j;
-                    candidateOrder->push(make_pair((*P_PTable::table)[idi][idj],
-                                                   make_pair(P_PTable::patternIDTable[i], P_PTable::patternIDTable[j])));
+            for (auto it1 = (g_ct->getCT())->begin(); it1 != g_ct->getCT()->end(); ++it1) {
+                for (auto it2 = it1; it2 != g_ct->getCT()->end(); ++it2) {
+                    candidateOrder->push(make_pair((*P_PTable::table)[P_PTable::patternIDMap[*it1]][P_PTable::patternIDMap[*it2]],
+                                                   make_pair(*it1, *it2)));
                 }
             }
-            P_PTable::generatedTable = P_PTable::total_p_id;
 #else
             it_ct_1 = codeTableSet::iterator(begin_ct);            //hard copy
             it_ct_2 = codeTableSet::iterator(begin_ct);            //hard copy
@@ -316,7 +313,6 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_ct->deleteDittoPattern(top);
             g_ct->rollback();            //we need to rollback because all usages must be correct before we can generate more candidates
 #ifdef FMP
-            P_PTable::total_p_id = store_total_p_id;
             P_PTable::rollbackTable();
 #endif
         }
@@ -629,13 +625,8 @@ usgSz *Ditto::tryVariations(DittoPattern *accepted, usgSz *current_usgSz) {
                         } else
                             eventSets[l] = new eventSet(*accepted->getSymbols(l - gapCnt)); //hard copy
                     }
-#ifdef FMP
-                    auto *newp = new DittoPattern(new_length, eventSets, par->seq, P_PTable::total_p_id++, accepted,
-                                                  nullptr);        //we call this constructor because it doesn't build the minWindows yet
-#else
                     auto *newp = new DittoPattern(new_length, eventSets, par->seq, accepted,
                                                   nullptr);        //we call this constructor because it doesn't build the minWindows yet
-#endif
                     //prune on minsup
                     bool deleteDittoPattern = false;
                     if (par->prune_tree) {
@@ -781,10 +772,6 @@ void Ditto::generateCandidates(usagepatternSet::iterator *pt_ct_1, usagepatternS
 
 //Only adds the patterns if they are not already present
 void Ditto::insertCandidates(patternSet *plist) {
-#ifdef FMP
-    vector<bool> prunedP(P_PTable::total_p_id, false);
-    int pruneCnt = 0;
-#endif
     auto it = plist->begin(), end = plist->end();
     while (it != end) {
         DittoPattern *p = *it;
@@ -810,27 +797,10 @@ void Ditto::insertCandidates(patternSet *plist) {
         }
         if (deleteDittoPattern) {
 
-#ifdef FMP
-            if (p->getPID() < P_PTable::total_p_id - 1) {
-                prunedP[p->getPID()] = true;
-                ++pruneCnt;
-            }
-#endif
             delete p;
         }
         ++it;
     }
-#ifdef FMP
-    for (int i = 0, offset = 0; i < P_PTable::total_p_id; ++i) {
-        if (prunedP[i]) {
-            ++offset;
-        } else {
-            P_PTable::patternIDTable[i]->setPID(i - offset);
-            P_PTable::patternIDTable[i - offset] = P_PTable::patternIDTable[i];
-        }
-    }
-    P_PTable::total_p_id -= pruneCnt;
-#endif
 }
 
 
@@ -950,12 +920,7 @@ DittoPattern *Ditto::buildInterleavedDittoPattern(DittoPattern *singleton, Ditto
         else
             eventSets[pos] = new eventSet(*p->getSymbols(pos_p++)); //hard copy
     }
-#ifdef FMP
-    auto *newp =  new DittoPattern(newLength, eventSets, par->seq, P_PTable::total_p_id++, singleton, p);
-    return newp;
-#else
     return new DittoPattern(newLength, eventSets, par->seq, singleton, p);
-#endif
 }
 
 //construct a new pattern from a and b with given offset (already checked that there is no overlap)
@@ -979,16 +944,7 @@ DittoPattern *Ditto::buildDittoPattern(DittoPattern *a, DittoPattern *b, int off
         else if (pos >= startPosB && pos - startPosB < b->getLength())
             eventSets[pos] = new eventSet(*b->getSymbols(pos - startPosB)); //hard copy
     }
-#ifdef FMP
-    newp = new DittoPattern(newLength, eventSets, par->seq, P_PTable::total_p_id++, a, b);
-    if (P_PTable::patternIDTable.size() < P_PTable::total_p_id) {
-        P_PTable::patternIDTable.resize(P_PTable::total_p_id);
-    }
-
-    P_PTable::patternIDTable[P_PTable::total_p_id - 1] = newp;
-#else
     newp = new DittoPattern(newLength, eventSets, par->seq, a, b);
-#endif
     return newp;
 }
 
@@ -1000,10 +956,6 @@ usgSz *Ditto::postprune(DittoPattern *accepted, int current_total_usg, double cu
             if (p->getUsageDecreased())
                 pruneset->insert(p);
     }
-#ifdef FMP
-    vector<bool> prunedP(P_PTable::total_p_id, false);
-    int pruneCnt = 0;
-#endif
     while (!pruneset->empty()) {
         //prune the top
         auto it_top = pruneset->begin();
@@ -1025,10 +977,6 @@ usgSz *Ditto::postprune(DittoPattern *accepted, int current_total_usg, double cu
                                    << endl;
                 }
             }
-#ifdef FMP
-            prunedP[top->getPID()] = true;
-            ++pruneCnt;
-#endif
             current_total_usg = g_cover->get_totalUsage();
             current_size = new_size;
             //add more prune candidates
@@ -1042,19 +990,6 @@ usgSz *Ditto::postprune(DittoPattern *accepted, int current_total_usg, double cu
             g_ct->insertDittoPattern(top);        //put pattern back
         }
     }
-#ifdef FMP
-    P_PTable::prunedTable.resize(P_PTable::total_p_id - pruneCnt);
-    for (int i = 0, offset = 0; i < P_PTable::total_p_id; ++i) {
-        if (prunedP[i]) {
-            ++offset;
-        } else {
-            P_PTable::patternIDTable[i]->setPID(i - offset);
-            P_PTable::patternIDTable[i - offset] = P_PTable::patternIDTable[i];
-            P_PTable::prunedTable[i - offset] = i;
-        }
-    }
-    P_PTable::total_p_id -= pruneCnt;
-#endif
     delete pruneset;
     return new usgSz(current_total_usg, current_size);
 }

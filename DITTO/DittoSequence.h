@@ -73,7 +73,7 @@ public:
     bool g_debug;//DEBUG
     bool g_error;
 #ifdef FMP
-    set<int> *coverPattern;
+    set<DittoPattern*> *coverPattern;
     const int cutSize = 20;
 #endif
 

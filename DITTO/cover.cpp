@@ -10,7 +10,7 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
 
     delete[] g_sequence->coverPattern;
 
-    g_sequence->coverPattern = new set<int>[g_sequence->get_nrEvents() / g_sequence->cutSize];
+    g_sequence->coverPattern = new set<DittoPattern*>[g_sequence->get_nrEvents() / g_sequence->cutSize];
 #endif
 
     g_totalUsage = 0;
@@ -55,9 +55,7 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
     for (int seq_id = 0; seq_id < g_sequence->get_nrEvents() / g_sequence->cutSize; ++seq_id) {
         for (auto cp1 = g_sequence->coverPattern[seq_id].begin(); cp1 != g_sequence->coverPattern[seq_id].end(); ++cp1) {
             for (auto cp2 = cp1; cp2 != g_sequence->coverPattern[seq_id].end(); ++cp2) {
-                if (*cp1 < (*P_PTable::table).size() && *cp2 < (*P_PTable::table).size()) {
-                    (*P_PTable::table)[*cp1][*cp2]++;
-                }
+                (*P_PTable::table)[P_PTable::patternIDMap[*cp1]][P_PTable::patternIDMap[*cp2]]++;
             }
         }
     }
@@ -96,7 +94,7 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
             coverComplete = g_sequence->cover(p, w);
 #ifdef FMP
             int seq_id = w->get_mev_position(0)->id / g_sequence->cutSize;
-            g_sequence->coverPattern[seq_id].insert(p->getPID());
+            g_sequence->coverPattern[seq_id].insert(p);
 #endif
         }
 

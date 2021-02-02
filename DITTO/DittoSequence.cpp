@@ -410,7 +410,7 @@ void DittoSequence::coverSingletons(DittoPattern ***singletons) {
                 singletons[(*it)->attribute][(*it)->symbol]->updateUsages(0);
 #ifdef FMP
                     int seq_id = i / cutSize;
-                    coverPattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]->getPID());
+                    coverPattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]);
 #endif
             }
         }

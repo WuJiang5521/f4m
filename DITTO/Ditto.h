@@ -69,7 +69,7 @@ private:
     Cover *g_cover{};
 #ifdef FMP
     priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>> *candidateOrder;
-    const int candThreshold = 10;
+    const int candThreshold = 1;
 #endif
 
     patternSet *g_whiteList;            //contains all considered candidates so we don't need to compute their support and minWindows again
