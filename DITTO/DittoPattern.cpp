@@ -195,13 +195,20 @@ double DittoPattern::computeEstimatedGain(int usgX, int usgY, int usgZ, int usgS
 
 
 //NOTE: usage must be set before this method, i.e. cover must be run
+#ifdef MISS
+void DittoPattern::updateCodelength(double sum, double missSum, mathutil* mu, int nrOfAttributes)
+#else
 void DittoPattern::updateCodelength(double sum)    //sum includes laplace for every pattern
+#endif
 {
     codelength = -log2((usage + laplace) / sum);
 
     codelengthGap = -log2((usageGap + laplace) / (usageFill + usageGap + 2 * laplace));
 
     codelengthFill = -log2((usageFill + laplace) / (usageFill + usageGap + 2 * laplace));
+#ifdef MISS
+    codelengthMiss = -log2((usageMiss + laplace) / missSum) + mu->intcost(nrOfAttributes);
+#endif
 
     //Check if the total usage has decreased
     if (r_usage > usage)

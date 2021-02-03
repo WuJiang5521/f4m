@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Window.h"
 #include "Multi_event.h"
+#include "mathutil.h"
 
 using namespace std;
 
@@ -51,6 +52,10 @@ public:
 
     int getUsageFill() const { return usageFill; }
 
+#ifdef MISS
+    int getUsageMiss() const { return usageMiss; }
+#endif
+
     double getCodelength() const { return codelength; }
 
     double getCodelengthGap() const { return codelengthGap; }
@@ -76,12 +81,20 @@ public:
     bool overlap(Window *w, Window *nxt) const;
 
     bool overlap(eventSet *eventsA, eventSet *eventsB) const;
-
+#ifdef MISS
+    void updateUsages(int usgGap, int usgMiss) {
+        usage++;
+        usageGap += usgGap;
+        usageFill += length - 1;
+        usageMiss += usgMiss;
+    }
+#else
     void updateUsages(int usgGap) {
         usage++;
         usageGap += usgGap;
         usageFill += length - 1;
     }
+#endif
 
     double computeEstimatedGain(int usgX, int usgY, int usgZ, int usgS) const;
 
@@ -97,8 +110,11 @@ public:
     void setMinWindows(DittoSequence *s) { minWindows = buildMinWindows(s); }
 
     void resetUsage();
-
+#ifdef MISS
+    void updateCodelength(double sum, double missSum, mathutil* mu, int nrOfAttributes);
+#else
     void updateCodelength(double sum); //sum = sum of all usages + laplace
+#endif
     void rollback();
 
 
@@ -111,9 +127,17 @@ private:
     int size;                //total nr of events in the pattern
     int AID_rank;            //rank based on the attributes it specifies values for, i.e. for every attribute we have a 1-bit when the pattern has a value for it, and a 0-bit otherwise
     double szST;            //size of the pattern encoded with base code lengths
+#ifdef MISS
+    double codelength, codelengthGap, codelengthFill, codelengthMiss;
+#else
     double codelength, codelengthGap, codelengthFill;        //given a covering: the codeLength of the pattern, a gap in this pattern, and a fill in this pattern
+#endif
     double estimatedGain;    //expected gain in L(CT,D) when adding this pattern to the code table
+#ifdef MISS
+    int usage, usageGap, usageFill, usageMiss;
+#else
     int usage, usageGap, usageFill;
+#endif
     int support;            //max nr of disjoint minimal windows
 
     string g_info;            //breakdown info for generated patterns

@@ -24,7 +24,8 @@
 #include <cstring>
 #include <ctime>
 #include <queue>
-#define FMP
+//#define FMP
+//#define MISS
 
 static const int CATEGORICAL = 1, ITEMSET = 2;
 static const double laplace = 0;

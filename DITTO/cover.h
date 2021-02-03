@@ -16,6 +16,9 @@ private:
     CodeTable *g_codeTable;
     DittoSequence *g_sequence;
     int g_totalUsage;
+#ifdef MISS
+    int g_totalUsageMiss;
+#endif
     double g_szSequenceAndCT;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
     bool otherData;                    //false = we cover the data on which the Code Table is build, true = we cover other data
 
@@ -28,9 +31,16 @@ public:
 
     void computeTotalUsage(codeTableSet *ct);
 
-    bool coverWithDittoPatternMinWindows(DittoPattern *p);
+#ifdef MISS
+    void computeTotalUsageMiss(codeTableSet *ct);
+#endif
 
+    bool coverWithDittoPatternMinWindows(DittoPattern *p);
+#ifdef MISS
+    int coverWindowWithDittoPattern(Window *w, DittoPattern *p);
+#else
     bool coverWindowWithDittoPattern(Window *w, DittoPattern *p);
+#endif
 
     void updateDittoPatternCodelengths(
             codeTableSet *ct);    //after every Cover we need to update the codelenghts, except when we use a code set to cover other/new data

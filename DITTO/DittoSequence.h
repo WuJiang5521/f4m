@@ -64,8 +64,11 @@ public:
 
     bool cover(DittoPattern *p, Window *w); //pos = id of multi_event in the sequence
     bool cover(Event *e, int pos, DittoPattern *p);
-
+#ifdef MISS
+    int tryCover(eventSet *events, int pos);
+#else
     bool tryCover(eventSet *events, int pos); //true = cover is possible
+#endif
     bool tryCover(Event *e, int pos);
 
     void coverSingletons(DittoPattern ***singletons);

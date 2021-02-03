@@ -43,6 +43,9 @@ public:
     int getCTLength() const { return length_CT; };
 
     codeTableSet *getCT() const { return g_codeTable; };
+#ifdef MISS
+    mathutil *getMathUtil() const { return mu; }
+#endif
 
     void set_szCT_C(DittoSequence *s) {
         szCT_C = compute_szCT_C(s);

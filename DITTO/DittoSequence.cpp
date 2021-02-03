@@ -330,9 +330,13 @@ const list<Multi_event *> *DittoSequence::findOccurrences(eventSet *events) cons
             if ((*occPerEvent[j])->id != (*occPerEvent[j - 1])->id)    //check if all point at same Multi_event
                 aligned = false;
         }
-
+#ifdef MISS
+        if (occ->empty() || *occPerEvent[smallest] != occ->back())
+            occ->push_back((*occPerEvent[smallest]));
+#else
         if (aligned)                                                //add new occurence
             occ->push_back((*occPerEvent[0]));
+#endif
 
         occPerEvent[smallest]++;                                    //go to next occurence for the event with the earliest occurence
         if (occPerEvent[smallest] == endPerEvent[smallest])            //if there is no next occurence we stop
@@ -379,7 +383,16 @@ bool DittoSequence::cover(Event *e, int pos, DittoPattern *p) {
     }
     return (mevCovered == par->nrMulti_events);
 }
-
+#ifdef MISS
+int DittoSequence::tryCover(eventSet *events, int pos) {
+    int missCnt = 0;
+    for (auto it: *events) {
+        if (!tryCover(it, pos))
+            ++missCnt;
+    }
+    return missCnt;
+}
+#else
 //RETURN true when cover is possible
 bool DittoSequence::tryCover(eventSet *events, int pos) {
     for (auto it: *events) {
@@ -388,6 +401,7 @@ bool DittoSequence::tryCover(eventSet *events, int pos) {
     }
     return true;
 }
+#endif
 
 //RETURN true when cover is possible
 bool DittoSequence::tryCover(Event *e, int pos) {
@@ -407,9 +421,13 @@ void DittoSequence::coverSingletons(DittoPattern ***singletons) {
             if (!g_mev_time[i]->testCovered((*it)->id)) {   //if not yet covered
                 //fill the isCovered array in Multi_event
                 g_mev_time[i]->cover((*it), singletons[(*it)->attribute][(*it)->symbol]);
+#ifdef MISS
+                singletons[(*it)->attribute][(*it)->symbol]->updateUsages(0, 0);
+#else
                 singletons[(*it)->attribute][(*it)->symbol]->updateUsages(0);
+#endif
 #ifdef FMP
-                    int seq_id = i / cutSize;
+                    int seq_id = g_mev_time[i]->seqid;
                     coverPattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]);
 #endif
             }
