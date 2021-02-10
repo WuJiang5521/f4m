@@ -44,8 +44,8 @@ public:
     prunepatternSet::iterator findDittoPatternInSet(prunepatternSet *pset, DittoPattern *p);
 
     void breakDown(DittoPattern *p);
-#ifdef FMP
-    void generateCandidates(usgSz *current_usgSz);
+#ifdef LSH
+    void generateCandidates(usgSz *current_usgSz); // our generator for less generation
 #else
     void generateCandidates(usagepatternSet::iterator *pt_ct_1, usagepatternSet::iterator *pt_ct_2,
                             usagepatternSet::iterator *pt_begin_ct, usagepatternSet::iterator *pt_end_ct,
@@ -67,9 +67,9 @@ private:
     usagepatternSet *g_ct_on_usg;        //ordered on usage
 
     Cover *g_cover{};
-#ifdef FMP
-    priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>> *candidateOrder;
-    const int candThreshold = 1;
+#ifdef LSH
+    priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>> *candidateOrder; // candidate order that generated from Table
+    const double candThreshold = 0.05; // the candidate whose table value is less than candThreshold * nrSequence is abandoned
 #endif
 
     patternSet *g_whiteList;            //contains all considered candidates so we don't need to compute their support and minWindows again

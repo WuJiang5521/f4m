@@ -136,7 +136,14 @@ int dittoEnter(int argc, char *argv[]) {
         system("pause");
     return 0;
 }
+#ifdef MISS
+bool miss_print_debug = false;
+std::ofstream outfile_miss;
+#endif
 Ditto::Ditto(Parameters *par) : par(par) {
+#ifdef MISS
+    outfile_miss.open("./miss_debug_output.txt");
+#endif
     g_outputStream << par->seq->print_sequence(false);      //DEBUG
 
     par->start = time(nullptr);
@@ -150,7 +157,7 @@ Ditto::Ditto(Parameters *par) : par(par) {
     g_blackList = new patternSet;
     g_whiteList = new patternSet;
     g_ct_on_usg = new usagepatternSet;        //set to combine CTxCT based on usage
-#ifdef FMP
+#ifdef LSH
     candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
 #endif
 
@@ -168,7 +175,7 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_ct_on_usg->insert(p);
         }
     }
-#ifdef FMP
+#ifdef LSH
     vector<DittoPattern*> singletons;
     P_PTable::patternIDMap.clear();
     int initialPatternIDMapTop = 0;
@@ -196,7 +203,7 @@ Ditto::Ditto(Parameters *par) : par(par) {
     auto it_ct_1 = g_ct_on_usg->begin(), it_ct_2 = g_ct_on_usg->begin(), begin_ct = g_ct_on_usg->begin(), end_ct = g_ct_on_usg->end();    //iterators to update candidate list
 
     auto *g_cover = new Cover(par->seq, g_ct, false);    //determine ST size
-#ifdef FMP
+#ifdef LSH
     delete candidateOrder;
     candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
     for (int i = 0; i < (*P_PTable::table).size(); ++i) {
@@ -207,14 +214,31 @@ Ditto::Ditto(Parameters *par) : par(par) {
 #endif
 
     auto *current_usgSz = new usgSz(g_cover->get_totalUsage(), g_cover->get_szSequenceAndCT());
+    double init_sz = current_usgSz->sz;
 
     double STsize = current_usgSz->sz;
     g_outputStream << "\n\nST " << *current_usgSz << endl;//DEBUG
     g_outputStream << g_ct->printCT(false);//DEBUG
+#ifdef MISS
+    double debug_cur_size = 0.0;
+    int debug_cur_miss_cnt = 0;
+#endif
+//    cout << "nr seq: " << par->seq->get_nrSequences() << endl;
+//    double s_len_avg = 0;
+//    for (int i = 0; i < par->seq->get_nrSequences(); ++i) {
+//        s_len_avg += par->seq->get_sequence_sizes()[i];
+//    }
+//    cout << "seq len avg: " << s_len_avg / par->seq->get_nrSequences() << endl;
+//    cout << "nr Attribute: " << par->nrOfAttributes << endl;
+//    int event_len = 0;
+//    for (int i = 0; i < par->nrOfAttributes; ++i) {
+//        event_len += par->alphabetSizes[i];
+//    }
+//    cout << "event len: " << event_len << endl;
 
     while (true) {
-#ifdef FMP
-        if ((candidateOrder->empty() || candidateOrder->top().first < candThreshold) &&
+#ifdef LSH
+        if ((candidateOrder->empty() || candidateOrder->top().first < candThreshold * par->seq->get_nrSequences()) &&
             g_cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
             break;
         generateCandidates(current_usgSz);
@@ -246,10 +270,11 @@ Ditto::Ditto(Parameters *par) : par(par) {
         if (!g_ct->insertDittoPattern(
                 top))                //pattern already present. NOTE this check must be after setMinWindows, because pattern equality is also based on support
             continue;                                //already present
-#ifdef FMP
+#ifdef LSH
         P_PTable::checkTable();
         int patternIDMapTop = 0;
         P_PTable::patternIDTable.clear();
+        P_PTable::patternIDMap.clear();
         for (auto & p : *(g_ct->getCT())) {
             P_PTable::patternIDMap[p] = patternIDMapTop++;
             P_PTable::patternIDTable.push_back(p);
@@ -267,17 +292,33 @@ Ditto::Ditto(Parameters *par) : par(par) {
         P_PTable::clearTable(P_PTable::tableSize);
 #endif
         //Cover
-        clock_t t0 = clock();
+//        clock_t t0 = clock();
         g_cover = new Cover(par->seq, g_ct, false);
-        cout << "cover time: " << clock() - t0 << endl;
+//        cout << "cover time: " << clock() - t0 << endl;
         double new_size = g_cover->get_szSequenceAndCT();
         int new_total_usage = g_cover->get_totalUsage();
 
-        cout << "current_size = " << current_usgSz->sz << "  new_size = " << new_size << endl;//DEBUG
+        cout << "current_size = " << current_usgSz->sz << "  new_size = " << new_size << "dL: " << (init_sz - current_usgSz->sz) / init_sz * 100.0 << endl;//DEBUG
 //        cout << "ct size: " << g_ct->getCT()->size() << endl;
+#ifdef MISS
+//        double debug_new_sz = new_size;
+//        int debug_miss_cnt = 0;
+//        for (auto it_ct : *g_ct->getCT()) {
+//            if (it_ct->getUsage() > 0 && it_ct->getLength() > 1) {
+//                debug_new_sz -= it_ct->getUsageMiss() *
+//                                it_ct->getCodelengthMiss();
+//                debug_miss_cnt += it_ct->getUsageMiss();
+//            }
+//        }
+//        cout << "debug new size: " << debug_cur_size << ", debug miss count: " << debug_cur_miss_cnt << endl;
+#endif
 
         //Check improvement
         if (new_size < current_usgSz->sz) {
+#ifdef MISS
+//            debug_cur_miss_cnt = debug_miss_cnt;
+//            debug_cur_size = debug_new_sz;
+#endif
             current_usgSz = postprune(top, new_total_usage, new_size);                //post acceptance pruning
             if (par->gapvariants)                                                    //recursively try variations of top+singleton
                 current_usgSz = tryVariations(top, current_usgSz);
@@ -291,13 +332,15 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_cand->clear();
             end_ct = g_ct_on_usg->end();
             begin_ct = g_ct_on_usg->begin();
-#ifdef FMP
+#ifdef LSH
             delete candidateOrder;
             candidateOrder = new priority_queue<pair<int, pair<DittoPattern*, DittoPattern*>>>();
             for (auto it1 = (g_ct->getCT())->begin(); it1 != g_ct->getCT()->end(); ++it1) {
                 for (auto it2 = it1; it2 != g_ct->getCT()->end(); ++it2) {
-                    candidateOrder->push(make_pair((*P_PTable::table)[P_PTable::patternIDMap[*it1]][P_PTable::patternIDMap[*it2]],
-                                                   make_pair(*it1, *it2)));
+                    DittoPattern *minp = *it1 > *it2 ? *it2 : *it1;
+                    DittoPattern *maxp = *it1 <= *it2 ? *it2 : *it1;
+                    candidateOrder->push(make_pair((*P_PTable::table)[P_PTable::patternIDMap[minp]][P_PTable::patternIDMap[maxp]],
+                                                   make_pair(minp, maxp)));
                 }
             }
 #else
@@ -312,11 +355,11 @@ Ditto::Ditto(Parameters *par) : par(par) {
             par->cntRej++;
             g_ct->deleteDittoPattern(top);
             g_ct->rollback();            //we need to rollback because all usages must be correct before we can generate more candidates
-#ifdef FMP
+#ifdef LSH
             P_PTable::rollbackTable();
 #endif
         }
-#ifdef FMP
+#ifdef LSH
 //        cout << "P_PTable::total_p_id: " << P_PTable::total_p_id << endl;
 #endif
 
@@ -325,7 +368,45 @@ Ditto::Ditto(Parameters *par) : par(par) {
 
     g_ct->deleteUnusedDittoPatterns();            //Only at the very end
     g_cover = new Cover(par->seq, g_ct, false);
-
+#ifdef MISS
+    int debug_miss_cnt = 0;
+    for (auto it_ct : *g_ct->getCT()) {
+        if (it_ct->getUsage() > 0 && it_ct->getLength() > 1) {
+            debug_miss_cnt += it_ct->getUsageMiss();
+        }
+    }
+    cout << "miss count: " << debug_miss_cnt << endl;
+#endif
+    cout << "nr seq: " << par->seq->get_nrSequences() << endl;
+    double s_len_avg = 0;
+    for (int i = 0; i < par->seq->get_nrSequences(); ++i) {
+        s_len_avg += par->seq->get_sequence_sizes()[i];
+    }
+    cout << "seq len avg: " << s_len_avg / par->seq->get_nrSequences() << endl;
+    cout << "nr Attribute: " << par->nrOfAttributes << endl;
+    int event_len = 0;
+    for (int i = 0; i < par->nrOfAttributes; ++i) {
+        event_len += par->alphabetSizes[i];
+    }
+    cout << "event len: " << event_len << endl;
+    int ct_no_singleton_cnt = 0, ct_len_avg = 0;
+    for (auto & p : *(g_ct->getCT())) {
+        ct_len_avg += p->getSize();
+        if (p->getSize() > 1) {
+            ++ct_no_singleton_cnt;
+        }
+    }
+    cout << "P num: " << ct_no_singleton_cnt << "P len avg: " << (double)ct_len_avg / g_ct->getCT()->size() << endl;
+    double nowL = g_cover->get_szSequenceAndCT();
+#ifdef MISS
+        for (auto it_ct : *g_ct->getCT()) {
+            if (it_ct->getUsage() > 0 && it_ct->getLength() > 1) {
+                nowL -= it_ct->getUsageMiss() *
+                                it_ct->getCodelengthMiss();
+            }
+        }
+#endif
+    cout <<  (init_sz - nowL) / init_sz * 100.0 << endl;
     //compute breakdown results for found patterns
     if (!par->dummy_file.empty()) {
         for (auto ct_it : *g_ct->getCT()) {
@@ -338,6 +419,10 @@ Ditto::Ditto(Parameters *par) : par(par) {
             g_outputStream << "dummy " << i << ": " << par->dummies[i]->toString() << endl;
     }
 
+#ifdef MISS
+//    miss_print_debug = true;
+//    g_cover = new Cover(par->seq, g_ct, false);
+#endif
     g_outputStream << g_ct->printCT(false);    //NOTE: after search for dummy patterns
 
     par->lengthCT = g_ct->getCTLength();
@@ -668,12 +753,12 @@ usgSz *Ditto::tryVariations(DittoPattern *accepted, usgSz *current_usgSz) {
                                 } else {
                                     par->cntRejVar++;
                                     g_ct->deleteDittoPattern(newp);
-#ifdef FMP
+#ifdef LSH
 //                                    --P_PTable::total_p_id;
 #endif
                                 }
                             }
-#ifdef FMP
+#ifdef LSH
 //                            else {
 //                                --P_PTable::total_p_id;
 //                            }
@@ -689,12 +774,12 @@ usgSz *Ditto::tryVariations(DittoPattern *accepted, usgSz *current_usgSz) {
     delete tempCand;
     return current_usgSz;
 }
-#ifdef FMP
+#ifdef LSH
 void Ditto::generateCandidates(usgSz *current_usgSz) {
     bool stop = false;
     while (!candidateOrder->empty()) {
         auto top = candidateOrder->top();
-        if (top.first < candThreshold) {
+        if (top.first < candThreshold * par->seq->get_nrSequences()) {
             break;
         }
         DittoPattern * p1 = top.second.first;

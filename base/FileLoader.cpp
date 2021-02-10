@@ -7,7 +7,7 @@
 #include "BaseAttr.hpp"
 #include "json.hpp"
 #include <exception>
-
+//#define FLITER_SERVER
 using namespace std;
 using json = nlohmann::json;
 
@@ -18,6 +18,14 @@ list<BaseSeq> extract_tt_sequences(json j) {
         for (auto game: j["record"]["list"]) {
             for (auto rally: game["list"]) {
                 auto events = vector<BaseEvt>();
+#ifdef FLITER_SERVER
+                if (rally["list"].size() <= 3) {
+                    continue;
+                }
+                if (rally["list"][0]["HitPlayer"] == "00") {
+                    continue;
+                }
+#endif
                 for (auto strike: rally["list"]) {
                     auto attrs = vector<int>();
 

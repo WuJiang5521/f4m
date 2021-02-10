@@ -6,7 +6,7 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
                                                                        g_codeTable(codeTable),
                                                                        otherData(otherData) {
     g_sequence->getParameters()->cntCovers++;
-#ifdef FMP
+#ifdef LSH
 
     delete[] g_sequence->coverPattern;
 
@@ -51,8 +51,8 @@ Cover::Cover(DittoSequence *s, CodeTable *codeTable, bool otherData) : g_sequenc
 
     //cover the rest with singletons
     g_sequence->coverSingletons(singletons);
-#ifdef FMP
-    for (int seq_id = 0; seq_id < g_sequence->get_nrEvents() / g_sequence->cutSize; ++seq_id) {
+#ifdef LSH
+    for (int seq_id = 0; seq_id < g_sequence->get_nrSequences(); ++seq_id) {
         for (auto cp1 = g_sequence->coverPattern[seq_id].begin(); cp1 != g_sequence->coverPattern[seq_id].end(); ++cp1) {
             for (auto cp2 = cp1; cp2 != g_sequence->coverPattern[seq_id].end(); ++cp2) {
                 (*P_PTable::table)[P_PTable::patternIDMap[*cp1]][P_PTable::patternIDMap[*cp2]]++;
@@ -92,6 +92,11 @@ void Cover::computeTotalUsageMiss(codeTableSet *ct) {
 bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
     bool coverComplete = false;
 
+#ifdef MISS
+//    if (miss_print_debug) {
+//        outfile_miss << "pattern: " << p->print() << endl;
+//    }
+#endif
     //loop through all this block's minimal windows
     list<Window *> *lst = p->getMinWindows(g_sequence, otherData);
 
@@ -111,7 +116,7 @@ bool Cover::coverWithDittoPatternMinWindows(DittoPattern *p) {
             p->updateUsages(w->get_GapLength());
 #endif
             coverComplete = g_sequence->cover(p, w);
-#ifdef FMP
+#ifdef LSH
             int seq_id = w->get_mev_position(0)->seqid;
             g_sequence->coverPattern[seq_id].insert(p);
 #endif
@@ -140,6 +145,9 @@ bool Cover::coverWindowWithDittoPattern(Window *w, DittoPattern *p) {
     //for each timestep in the pattern test whether the data can still be covered for this window
     for (int ts = 0; ts < p->getLength(); ++ts) {
 #ifdef MISS
+//        if (miss_print_debug) {
+//            outfile_miss << "pattern position: " << ts << endl;
+//        }
         missCnt += g_sequence->tryCover(p->getSymbols(ts), w->get_mev_position(ts)->id);
         if (missCnt > (p->getSize() + 5) / 10) {
             return -1;

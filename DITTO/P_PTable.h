@@ -2,8 +2,8 @@
 // Created by GuoZiYang on 2021/2/1.
 //
 
-#ifndef FMP_P_PTABLE_H
-#define FMP_P_PTABLE_H
+#ifndef LSH_P_PTABLE_H
+#define LSH_P_PTABLE_H
 
 #include <map>
 #include "DittoPattern.h"
@@ -23,20 +23,20 @@ class P_PTable {
         void clear() {
             memset(a, 0, sizeof a);
         }
-    };
+    }; // a hash map for mapping from DittoPattern* to pattern-id
 public:
-    static std::vector<std::vector<int>> *table;
-    static std::vector<std::vector<int>> preTable;
-    static std::vector<std::vector<int>> lastTable;
-    static std::vector<DittoPattern*> patternIDTable;
-    static void checkTable();
-    static void clearTable(int size);
-    static void rollbackTable();
-    static int tableSize;
+    static std::vector<std::vector<int>> *table; // A table point which points to the current using table.
+                                                 // (*table)[i][j] presents the number of sequences that pattern i and pattern j both emerge
+    static std::vector<std::vector<int>> preTable; // used for rollback
+    static std::vector<std::vector<int>> lastTable; // used for rollback
+    static std::vector<DittoPattern*> patternIDTable; // mapping from pattern-id to DittoPattern*
+    static void checkTable(); // switch *table to preTable if it points to lastTable, and switch *table to lastTable if it points to preTable
+    static void clearTable(int size); // clear *table to all zeros
+    static void rollbackTable(); // switch *table back
+    static int tableSize; // current size of preTable and lastTable (preTable and lastTable have same size)
 
-    static int total_p_id;
-    static MyHashMap patternIDMap;
+    static MyHashMap patternIDMap; // mapping from DittoPattern* to pattern-id
 };
 
 
-#endif //FMP_P_PTABLE_H
+#endif //LSH_P_PTABLE_H

@@ -11,7 +11,11 @@ public:
     Event(int s, int aid, int id, int tree_id) : symbol(s), attribute(aid), id(id), tree_id(tree_id) {}
 
     void print() const {
+#ifdef MISS
+        outfile_miss << "id: " << id << " sym: " << symbol << " aid: " << attribute << endl;
+#else
         cout << "id: " << id << " sym: " << symbol << " aid: " << attribute << endl;
+#endif
     }
 
     const int symbol;            //always 0 in ITEM SET data

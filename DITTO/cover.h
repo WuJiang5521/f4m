@@ -6,8 +6,8 @@
 #include "DittoSequence.h"
 #include "CodeTable.h"
 #include "P_PTable.h"
-//#ifndef FMP
-//#define FMP
+//#ifndef LSH
+//#define LSH
 //#endif
 using namespace std;
 
@@ -17,7 +17,7 @@ private:
     DittoSequence *g_sequence;
     int g_totalUsage;
 #ifdef MISS
-    int g_totalUsageMiss;
+    int g_totalUsageMiss; // total usage for miss code
 #endif
     double g_szSequenceAndCT;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
     bool otherData;                    //false = we cover the data on which the Code Table is build, true = we cover other data

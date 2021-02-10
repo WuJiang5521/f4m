@@ -2,8 +2,8 @@
 // Created by A on 2021/1/23.
 //
 
-#ifndef FMP_BASEEVT_HPP
-#define FMP_BASEEVT_HPP
+#ifndef LSH_BASEEVT_HPP
+#define LSH_BASEEVT_HPP
 
 #include <iostream>
 #include <vector>
@@ -23,4 +23,4 @@ private:
 };
 
 
-#endif //FMP_BASEEVT_HPP
+#endif //LSH_BASEEVT_HPP

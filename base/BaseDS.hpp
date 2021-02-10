@@ -2,8 +2,8 @@
 // Created by A on 2021/1/23.
 //
 
-#ifndef FMP_BASEDS_HPP
-#define FMP_BASEDS_HPP
+#ifndef LSH_BASEDS_HPP
+#define LSH_BASEDS_HPP
 
 
 #include <string>
@@ -19,4 +19,4 @@ public:
     static void convert_data(const std::string& filename);
 };
 
-#endif //FMP_BASEDS_HPP
+#endif //LSH_BASEDS_HPP

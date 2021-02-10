@@ -50,6 +50,12 @@ double CodeTable::compute_szD_CT(DittoSequence *sequence) {
                         it_ct->getCodelengthGap();            //TERM: L(C_g | CT)		-> gap codes
                 size += it_ct->getUsageFill() *
                         it_ct->getCodelengthFill();        //TERM: L(C_g | CT)		-> no_gap codes
+#ifdef MISS
+                if (it_ct->getUsageMiss() > 0) {
+                    size += it_ct->getUsageMiss() *
+                            it_ct->getCodelengthMiss();
+                }
+#endif
             }
         }
     }

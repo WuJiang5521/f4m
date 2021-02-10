@@ -50,14 +50,24 @@ void DittoPattern::init() {
     r_codelength = DBL_MAX;
     r_codelengthGap = DBL_MAX;
     r_codelengthFill = DBL_MAX;
+#ifdef MISS
+    codelengthMiss = DBL_MAX;
+    r_codelengthMiss = DBL_MAX;
+#endif
     estimatedGain = 0;
 
     usage = 0;
     usageGap = 0;
     usageFill = 0;
+#ifdef MISS
+    usageMiss = 0;
+#endif
     r_usage = 0;
     r_usageGap = 0;
     r_usageFill = 0;
+#ifdef MISS
+    r_usageMiss = 0;
+#endif
 
     usageDecreased = false;
 
@@ -203,11 +213,16 @@ void DittoPattern::updateCodelength(double sum)    //sum includes laplace for ev
 {
     codelength = -log2((usage + laplace) / sum);
 
+#ifdef MISS
+    codelengthGap = -log2((usageGap + laplace) / (usageFill + usageGap + usageMiss + 2 * laplace));
+
+    codelengthFill = -log2((usageFill + laplace) / (usageFill + usageGap + usageMiss + 2 * laplace));
+    codelengthMiss = -log2((usageMiss + laplace) / (usageFill + usageGap + usageMiss)) + mu->intcost(nrOfAttributes);
+#else
+
     codelengthGap = -log2((usageGap + laplace) / (usageFill + usageGap + 2 * laplace));
 
     codelengthFill = -log2((usageFill + laplace) / (usageFill + usageGap + 2 * laplace));
-#ifdef MISS
-    codelengthMiss = -log2((usageMiss + laplace) / missSum) + mu->intcost(nrOfAttributes);
 #endif
 
     //Check if the total usage has decreased
@@ -392,11 +407,18 @@ void DittoPattern::resetUsage() {
     usage = 0;
     usageGap = 0;
     usageFill = 0;
+#ifdef MISS
+    r_usageMiss = usageMiss;
+    usageMiss = 0;
+#endif
 
     r_codelength = codelength;
     r_codelengthGap = codelengthGap;
     r_codelengthFill = codelengthFill;
     //leave the codelength itself untouched!
+#ifdef MISS
+    r_codelengthMiss = codelengthMiss;
+#endif
 
     //set al windows to active = false
 
@@ -411,6 +433,10 @@ void DittoPattern::rollback() {
     codelength = r_codelength;
     codelengthGap = r_codelengthGap;
     codelengthFill = r_codelengthFill;
+#ifdef MISS
+    usageMiss = r_usageMiss;
+    codelengthMiss = r_codelengthMiss;
+#endif
 }
 
 DittoPattern::~DittoPattern() {

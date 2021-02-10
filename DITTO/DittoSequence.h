@@ -6,8 +6,8 @@
 #include "mathutil.h"
 #include "DittoPattern.h"
 
-//#define FMP
-#ifdef FMP
+//#define LSH
+#ifdef LSH
 #include "P_PTable.h"
 #endif
 
@@ -65,7 +65,7 @@ public:
     bool cover(DittoPattern *p, Window *w); //pos = id of multi_event in the sequence
     bool cover(Event *e, int pos, DittoPattern *p);
 #ifdef MISS
-    int tryCover(eventSet *events, int pos);
+    int tryCover(eventSet *events, int pos); // number of miss events number
 #else
     bool tryCover(eventSet *events, int pos); //true = cover is possible
 #endif
@@ -75,9 +75,9 @@ public:
 
     bool g_debug;//DEBUG
     bool g_error;
-#ifdef FMP
-    set<DittoPattern*> *coverPattern;
-    const int cutSize = 20;
+#ifdef LSH
+    set<DittoPattern*> *coverPattern; // coverPattern[i] includes the patterns emerge in sequence i
+    const int cutSize = 50; // a sequence's length is no longer than cutSize
 #endif
 
 protected:

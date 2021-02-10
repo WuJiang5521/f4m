@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
-project(fmp)
+project(LSH)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(
-        fmp
+        LSH
         test.cpp
 
         base/BaseAttr.cpp base/BaseAttr.hpp
@@ -12,8 +12,6 @@ add_executable(
         base/BaseEvt.cpp base/BaseEvt.hpp
         base/json.hpp
         base/FileLoader.cpp base/FileLoader.hpp
-
-        FMP/Fmp.cpp FMP/Fmp.hpp
 
         DITTO/CodeTable.cpp DITTO/CodeTable.h
         DITTO/cover.cpp DITTO/cover.h
@@ -30,4 +28,4 @@ add_executable(
         DITTO/stdafx.h
         DITTO/targetver.h
         DITTO/P_PTable.cpp
-        DITTO/Window.cpp DITTO/Window.h base/BaseDS.cpp base/BaseDS.hpp FMP/Fmp.cpp FMP/Fmp.hpp)
+        DITTO/Window.cpp DITTO/Window.h base/BaseDS.cpp base/BaseDS.hpp)

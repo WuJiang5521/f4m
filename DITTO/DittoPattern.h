@@ -62,6 +62,10 @@ public:
 
     double getCodelengthFill() const { return codelengthFill; }
 
+#ifdef MISS
+    double getCodelengthMiss() const { return codelengthMiss; }
+#endif
+
     double getEstimatedGain() const { return estimatedGain; }
 
     DittoPattern *getX() { return g_x; }
@@ -150,8 +154,13 @@ private:
     DittoPattern *g_x, *g_y;            //the two patterns from which this pattern is build. NOTE: x < y
 
     //for rollback
+#ifdef MISS
+    double r_codelength, r_codelengthGap, r_codelengthFill, r_codelengthMiss;
+    int r_usage, r_usageGap, r_usageFill, r_usageMiss;
+#else
     double r_codelength, r_codelengthGap, r_codelengthFill;
     int r_usage, r_usageGap, r_usageFill;
+#endif
     bool usageDecreased;
 
 };

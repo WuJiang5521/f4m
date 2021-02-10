@@ -2,8 +2,8 @@
 // Created by A on 2021/1/23.
 //
 
-#ifndef FMP_BASESEQ_HPP
-#define FMP_BASESEQ_HPP
+#ifndef LSH_BASESEQ_HPP
+#define LSH_BASESEQ_HPP
 
 
 #include "BaseEvt.hpp"
@@ -20,4 +20,4 @@ private:
 };
 
 
-#endif //FMP_BASESEQ_HPP
+#endif //LSH_BASESEQ_HPP

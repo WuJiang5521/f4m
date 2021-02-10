@@ -16,7 +16,7 @@ DittoSequence::DittoSequence(FILE *f, Parameters *par) : par(par) {
     } else
         par->nrOfDittoPatterns = 0;
     init();
-#ifdef FMP
+#ifdef LSH
     coverPattern = nullptr;
 #endif
 }
@@ -167,6 +167,9 @@ int DittoSequence::read(FILE *f) {
     //count sequences and events
     rewind(f);
     cnt = -1;
+#ifdef LSH
+    int cnt_nr_i = 0;
+#endif
     if (par->input_type == CATEGORICAL) {
         while (fscanf(f, "%d", &a) == 1) {
             if (cnt++ < par->nrOfAttributes)    //skip header line
@@ -174,8 +177,22 @@ int DittoSequence::read(FILE *f) {
             if (a == -2) acnt++;            //end of attribute
             if (acnt < 2) {
                 //all attributes have same number of sequences and events, so we only count the events and sequences in the first attribute
-                if (a >= 0)mcnt++;    //new multi_event
-                else scnt++;       //new sequence
+                if (a >= 0) {
+                    mcnt++;    //new multi_event
+#ifdef LSH
+                    ++cnt_nr_i;
+                    if (cnt_nr_i == cutSize) {
+                        cnt_nr_i = 0;
+                        ++scnt;
+                    }
+#endif
+                }
+                else {
+                    scnt++;       //new sequence
+#ifdef LSH
+                    cnt_nr_i = 0;
+#endif
+                }
             }
         }
         ecnt = mcnt * acnt;
@@ -233,16 +250,25 @@ int DittoSequence::read(FILE *f) {
         int i = 0;                //event id
         int sid = 0;            //sequence id
         int aid = 0;            //attribute id
+#ifdef LSH
+        int cnt_i = 0;
+#endif
         while (fscanf(f, "%d", &sym) == 1) {
             if (cnt++ < par->nrOfAttributes)    //skip header line
                 continue;
             if (sym == -2) {
                 aid++;
                 i = 0;
+#ifdef LSH
+                cnt_i = 0;
+#endif
                 sid = 0;
                 continue;
             }
             if (sym == -1) {
+#ifdef LSH
+                cnt_i = 0;
+#endif
                 sid++;
                 continue;
             }
@@ -254,6 +280,13 @@ int DittoSequence::read(FILE *f) {
             g_occ[aid][sym].push_back(me);
             me->addEvent(new Event(sym, aid, me->getSize(), tree_ids[aid][sym]));
             i++;
+#ifdef LSH
+            ++cnt_i;
+            if (cnt_i == cutSize) {
+                cnt_i = 0;
+                ++sid;
+            }
+#endif
         }
     } else //ITEM SET
     {
@@ -387,8 +420,18 @@ bool DittoSequence::cover(Event *e, int pos, DittoPattern *p) {
 int DittoSequence::tryCover(eventSet *events, int pos) {
     int missCnt = 0;
     for (auto it: *events) {
-        if (!tryCover(it, pos))
+        if (!tryCover(it, pos)) {
+//            if (miss_print_debug) {
+////                outfile_miss << "sequence: " << g_mev_time[pos]->seqid << endl;
+//                int seq_id = g_mev_time[pos]->seqid;
+//                int debug_pos = pos;
+////                while (pos - debug_pos - 1 >= 0 && g_mev_time[pos - debug_pos - 1]->seqid == seq_id) ++debug_pos;
+//                outfile_miss << "position: " << debug_pos << endl;
+//                outfile_miss << "event: ";
+//                it->print();
+//            }
             ++missCnt;
+        }
     }
     return missCnt;
 }
@@ -426,7 +469,7 @@ void DittoSequence::coverSingletons(DittoPattern ***singletons) {
 #else
                 singletons[(*it)->attribute][(*it)->symbol]->updateUsages(0);
 #endif
-#ifdef FMP
+#ifdef LSH
                     int seq_id = g_mev_time[i]->seqid;
                     coverPattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]);
 #endif

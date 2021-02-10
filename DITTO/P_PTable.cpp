@@ -11,8 +11,6 @@ std::vector<DittoPattern*> P_PTable::patternIDTable;
 int P_PTable::tableSize = 1000;
 P_PTable::MyHashMap P_PTable::patternIDMap;
 
-int P_PTable::total_p_id = 0;
-
 void P_PTable::checkTable() {
     table = table == &preTable ? &lastTable : &preTable;
 }

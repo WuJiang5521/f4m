@@ -2,8 +2,8 @@
 // Created by A on 2021/1/23.
 //
 
-#ifndef FMP_BASEATTR_HPP
-#define FMP_BASEATTR_HPP
+#ifndef LSH_BASEATTR_HPP
+#define LSH_BASEATTR_HPP
 
 #include <string>
 #include <map>
@@ -25,4 +25,4 @@ private:
 };
 
 
-#endif //FMP_BASEATTR_HPP
+#endif //LSH_BASEATTR_HPP

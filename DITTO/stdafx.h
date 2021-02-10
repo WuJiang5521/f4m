@@ -24,8 +24,8 @@
 #include <cstring>
 #include <ctime>
 #include <queue>
-//#define FMP
-//#define MISS
+#define LSH
+#define MISS
 
 static const int CATEGORICAL = 1, ITEMSET = 2;
 static const double laplace = 0;
@@ -36,5 +36,9 @@ static const double logbase = log(2);
 #include <ctime>
 #include <random>
 
+#ifdef MISS
+extern bool miss_print_debug; // DEBUFG
+extern std::ofstream outfile_miss; // DEBUG
+#endif
 
 #endif
