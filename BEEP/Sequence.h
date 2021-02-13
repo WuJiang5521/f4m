@@ -73,8 +73,8 @@ public:
 
     void cover_singletons(Pattern ***singletons);
 
-    bool g_debug;//DEBUG
-    bool g_error;
+    bool debug_flag;//DEBUG
+    bool error_flag;
 #ifdef LSH
     set<Pattern*> *cover_pattern; // cover_pattern[i] includes the patterns emerge in sequence i
     const int cut_size = 50; // a sequence's length is no longer than cut_size

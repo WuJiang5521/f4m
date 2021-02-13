@@ -59,10 +59,6 @@ double CodeTable::compute_sz_d_ct(Sequence *sequence) {
             }
         }
     }
-
-    if (sequence->get_input_type() == ITEMSET)
-        size += par->nr_events * logb2(par->alphabet_size);                            //TERM: sum_|D| log(|Omega|)
-
     return size;
 }
 

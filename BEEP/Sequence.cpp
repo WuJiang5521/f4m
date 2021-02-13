@@ -3,14 +3,14 @@
 #include "Sequence.h"
 
 Sequence::Sequence(FILE *f, Parameters *par) : par(par) {
-    g_error = false;
+    error_flag = false;
     if (read(f)) {
-        g_error = true;
+        error_flag = true;
         return;
     }
     if (!par->dummy_file.empty()) {
         if (load_dummies()) {
-            g_error = true;
+            error_flag = true;
             return;
         }
     } else

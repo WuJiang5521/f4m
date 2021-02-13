@@ -32,14 +32,12 @@ int enter_beep(int argc, char **argv) {
     parameters.cnt_infreq_materialized = 0;
     parameters.cnt_infreq = 0;
 
-    parameters.input_type = CATEGORICAL;
     parameters.minsup = 5;
     parameters.dummy_file = "";
     parameters.input_filename = "";
 
     if (parameters.release) {
         //DEFAULT values
-        parameters.input_type = CATEGORICAL;
         parameters.minsup = 5;
         parameters.dummy_file = "";
         parameters.input_filename = "";
@@ -83,7 +81,6 @@ int enter_beep(int argc, char **argv) {
                          << "\t-i\t<inputfile>.dat\t\t\t\t\t(mandatory)\n"
                          << "\t-p\t<pattern-file>.txt\t\t\t\t(default='" << parameters.dummy_file << "')\n"
                          << "\t-m\tminimum support\t\t\t\t\t(default=" << parameters.minsup << ")\n"
-                         << "\t-t\tinput type: 1=categorical, 2=item set\t(default=" << parameters.input_type << ")\n"
                          << "\t-w\ttrue=print all found patterns to file (also used to translate patterns from text-data)\n"
                          << "\t-f\ttrue=fill-patterns are used to aligne text-data\n";
                     return 1;
@@ -105,7 +102,7 @@ int enter_beep(int argc, char **argv) {
     parameters.seq = new Sequence(f, &parameters);
     fclose(f);
 
-    if (parameters.seq->g_error) {
+    if (parameters.seq->error_flag) {
         cout << "ERROR reading sequence or patterns!\n";
         if (!parameters.release)
             system("pause");
@@ -124,9 +121,6 @@ int enter_beep(int argc, char **argv) {
         for (int attr = 0; attr < parameters.nr_of_attributes; ++attr)
             parameters.fill_pattern[attr] = true;
     }
-
-    if (parameters.seq->get_input_type() != CATEGORICAL)        //for now only possible for categorical data
-        parameters.prune_tree = false;
     clock_t t0 = clock();
     auto *beep = new Beep(&parameters);
     cout << "BEEP time: " << (clock() - t0)*1.0/CLOCKS_PER_SEC << "s" << endl;

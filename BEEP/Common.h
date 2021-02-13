@@ -24,7 +24,6 @@
 #define LSH
 #define MISS
 
-static const int CATEGORICAL = 1, ITEMSET = 2;
 static const double laplace = 0;
 static const double logbase = log(2);
 #define lg2(x) (log(x) / logbase)
