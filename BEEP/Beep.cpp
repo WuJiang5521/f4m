@@ -52,9 +52,6 @@ int enter_beep(int argc, char **argv) {
                 case 'f':
                     parameters.fill_patterns = (atoi(poptarg) != 0);
                     break;
-                case 't':
-                    parameters.input_type = atoi(poptarg);
-                    break;
                 case 'i':
                     parameters.input_filename = string(poptarg);
                     pos = parameters.input_filename.find_last_of('.');

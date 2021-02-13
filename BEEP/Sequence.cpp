@@ -32,7 +32,6 @@ int Sequence::load_dummies() {
                 istream_iterator<string> beg(buf), end;
                 vector<string> tokens(beg, end);
                 auto it_vec = tokens.begin(), end_vec = tokens.end();
-                par->input_type = atoi((*it_vec).c_str());
                 it_vec++;
                 par->nr_of_patterns = atoi((*it_vec).c_str());
                 par->dummies = new Dummy *[par->nr_of_patterns];
@@ -138,14 +137,8 @@ int Sequence::read(FILE *f) {
     int a;                //symbol
 
     /*
-    HEADER
-        Contains the number of attributes followed by the alphabetsize per attribute
-    CASE CATEGORICAL
-        Every line contains one attribute and ends with -2, all sequences are separated by -1
-        For each attribute i its values range from 0 to max_i
-    CASE ITEM SET
-        For every time step all its events are listed subsequently and time steps are separated with -2, all sequences are separated by -1
-        Each value ranges from 0 to max, where the value also indicates the id of the attribute
+    Every line contains one attribute and ends with -2, all sequences are separated by -1
+    For each attribute i its values range from 0 to max_i
     */
 
     //read header info

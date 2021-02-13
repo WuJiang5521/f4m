@@ -395,7 +395,7 @@ struct Dummy {
 
 struct Parameters {
     string header() {
-        return "date; runtime; ST size; CT size; Perc. of orignal; |CT|; |non_singletons|; #exact; #subset; #union_subset; #unrelated; minsup; #events; #attributes; alphabet_size; alphabet_size_per_attribute; #patterns; #patternfile; cnt_mat_pat; cnt_covers; cnt_acc; cnt_rej; cnt_acc_var; cnt_rej_var; cnt_infreq_materialized; cnt_infreq; input; output; gapvariants; blacklist; whitelist; prune_est_gain; prune_tree; input_type\n";
+        return "date; runtime; ST size; CT size; Perc. of orignal; |CT|; |non_singletons|; #exact; #subset; #union_subset; #unrelated; minsup; #events; #attributes; alphabet_size; alphabet_size_per_attribute; #patterns; #patternfile; cnt_mat_pat; cnt_covers; cnt_acc; cnt_rej; cnt_acc_var; cnt_rej_var; cnt_infreq_materialized; cnt_infreq; input; output; gapvariants; blacklist; whitelist; prune_est_gain; prune_tree\n";
     }
 
     string to_string() {
@@ -421,7 +421,7 @@ struct Parameters {
         ss << cnt_mat_pat << "; " << cnt_covers << "; " << cnt_acc << "; " << cnt_rej << "; " << cnt_acc_var << "; "
            << cnt_rej_var << "; " << cnt_infreq_materialized << "; " << cnt_infreq << "; " << input_filename << "; "
            << output_filename << "; " << gapvariants << "; " << blacklist << "; " << whitelist << "; " << prune_est_gain
-           << "; " << prune_tree << "; " << input_type << "\n";
+           << "; " << prune_tree << "; " << "\n";
         return ss.str();
     }
 
@@ -459,7 +459,6 @@ struct Parameters {
     *fill_pattern;            //for each attribute whether fillPatters are used. To make sure all (sub)streams are equally long they are padded with an extra symbol (last in alphabet) which is disregarded in computing size(D, CT)
 
     int minsup,                    //a minimum support threshold for candidate patterns
-    input_type,                //CATEGORICAL or ITEMSET
     nr_events,
             nr_of_attributes,
             temp_alphabet_size,        //for generated data we only specify the alphabet_size for a single attribute (similar for all attributes)

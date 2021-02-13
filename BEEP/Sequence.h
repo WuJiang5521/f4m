@@ -30,8 +30,6 @@ public:
 
     MathUtil *get_mu() const { return mu; }
 
-    int get_input_type() const { return par->input_type; }
-
     Parameters *get_parameters() { return par; }
 
     int get_nr_events() const { return nr_events; }
@@ -88,8 +86,7 @@ protected:
     Event **mev_time;                        //a multi-event array, one event pointer per time step
 
     list<Event *> **occ;                        //for each attribute for each symbol an array of Event* where it occurs,
-    //CATEGORICAL: occ[aid][s] -> list of Event* for symbol s on attribute aid
-    //ITEM SET:	   occ[a][0]   -> list of Event* for attribute a (each attribute can have only one value)
+    // occ[aid][s] -> list of Event* for symbol s on attribute aid
 
     int nr_events;                                    //total number of events
     int nr_sequences;                                //number of sequences in the data

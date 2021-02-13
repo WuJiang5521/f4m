@@ -82,7 +82,7 @@ class Pattern:
         return result
 
 
-def generateRandomPatterns(input_type, nrOfPatterns, minSup, maxSup, minGapChance, maxGapChance, minSize, maxSize,
+def generateRandomPatterns(nrOfPatterns, minSup, maxSup, minGapChance, maxGapChance, minSize, maxSize,
                            nrAttr, alphaPerAttr, nrMev, unique):
     # a list of patterns that is returned
     patterns = []
@@ -96,11 +96,7 @@ def generateRandomPatterns(input_type, nrOfPatterns, minSup, maxSup, minGapChanc
         size = randrange(minSize, maxSize + 1, 1)
         length = randrange(math.ceil(float(size) / nrAttr), size + 1, 1)
         support = randrange(int(minSup * 10), int(maxSup * 10) + 1, 1)  # as percentage of total #events
-        if input_type == 1:
-            support = int(nrMev * nrAttr * (support / 10000.0))
-        else:
-            support = int(nrMev * nrAttr * 0.5 * (
-                    support / 10000.0))  # how likely is each attribute to appear in each timestep -> for now 0.5
+        support = int(nrMev * nrAttr * (support / 10000.0))
         support = int(support / size)
         patterns.append(Pattern(support, gapChance, size, length))
 
@@ -202,16 +198,12 @@ def insertPattern(data, nrMev, pattern, overwrite, interleave, occupied):
 
 
 """
-CATEGORICAL
-    Every line contains one attribute and ends with -2, all sequences are separated by -1
-    For each attribute i its values range from 0 to max_i
-ITEM SET
-    For every time step all its events are listed subsequently and time steps are separated with -2, all sequences are separated by -1
-    Each value ranges from 0 to max, where the value also indicates the id of the attribute 
+Every line contains one attribute and ends with -2, all sequences are separated by -1
+For each attribute i its values range from 0 to max_i
 """
 
 
-def generateData(input_type, nrMev, nrAttr, alphaPerAttr, patterns, overwrite, interleave, nrSequence, nrOfSequence):
+def generateData(nrAttr, alphaPerAttr, patterns, overwrite, interleave, nrSequence, nrOfSequence):
     minsup = sys.maxsize
 
     sigma = 4
@@ -227,22 +219,15 @@ def generateData(input_type, nrMev, nrAttr, alphaPerAttr, patterns, overwrite, i
 
     for i in range(0, nrMev):
         g_mev_time[i] = []
-        if input_type == 1:  # CATEGORICAL
-            if mevent_s_id == sequencesLen[seq_id]:
-                mevent_s_id = 0
-                seq_id += 1
-                for a in range(0, nrAttr):
-                    g_mev_time[i].append(-1)
-            else:
-                for a in range(0, nrAttr):
-                    g_mev_time[i].append(randrange(0, alphaPerAttr))
-                mevent_s_id += 1
-        else:  # ITEM SET
-            amount = randrange(0, nrAttr)  # per timestep choose the number of attributes that are present
-            mylist = range(0, nrAttr)
-            sample = [mylist[i] for i in sorted(random.sample(range(len(mylist)), amount))]
-            for a in sample:
-                g_mev_time[i].append(a)
+        if mevent_s_id == sequencesLen[seq_id]:
+            mevent_s_id = 0
+            seq_id += 1
+            for a in range(0, nrAttr):
+                g_mev_time[i].append(-1)
+        else:
+            for a in range(0, nrAttr):
+                g_mev_time[i].append(randrange(0, alphaPerAttr))
+            mevent_s_id += 1
         occupied[i] = [False] * len(g_mev_time[i])
 
     tijd = datetime.now().strftime("%d-%m-%Y_%H.%M.%S.%f")
@@ -256,7 +241,7 @@ def generateData(input_type, nrMev, nrAttr, alphaPerAttr, patterns, overwrite, i
             cnt = cnt + 1
         # p_file = p_file + str(cnt) + '.txt'
         with open(p_file, 'w') as fout:
-            fout.write(str(input_type) + ' ' + str(len(patterns)) + ' ' + str(nrAttr) + ' ' + str(alphaPerAttr) + '\n')
+            fout.write(str(len(patterns)) + ' ' + str(nrAttr) + ' ' + str(alphaPerAttr) + '\n')
             for pattern in patterns:
                 sup = insertPattern(g_mev_time, nrMev, pattern, overwrite, interleave, occupied)
                 if sup < minsup:
@@ -281,24 +266,17 @@ def generateData(input_type, nrMev, nrAttr, alphaPerAttr, patterns, overwrite, i
         for attri in range(0, nrAttr):
             fout.write(str(alphaPerAttr) + ' ')
         fout.write('\n')
-        if input_type == 1:  # CATEGORICAL
-            for a in range(0, nrAttr):
-                for i in range(0, nrMev):
-                    fout.write(str(g_mev_time[i][a]) + ' ')
-                if a != nrAttr - 1:
-                    fout.write('-2\n')
-        else:  # ITEM SET
+        for a in range(0, nrAttr):
             for i in range(0, nrMev):
-                for a in range(0, len(g_mev_time[i])):
-                    fout.write(str(g_mev_time[i][a]) + ' ')
-                fout.write('-2 ')
+                fout.write(str(g_mev_time[i][a]) + ' ')
+            if a != nrAttr - 1:
+                fout.write('-2\n')
     return [d_file, p_file, minsup]
 
 
 def usage():
     print('Use the following optional parameters:\n'
           '\t-h \tShow help\n'
-          '\t-i \t1=categorical <default>, 2=item set\n'
           '\t-p \t# of synthetic patterns to insert (default=5)\n'
           '\t-a \t# of attributes in the generated data (default=1)\n'
           '\t-m \t# of multi-events in the generated data (default=10000)\n'
@@ -319,7 +297,6 @@ def usage():
 def main(argv):
     interleave = True  # occurrences of a single pattern may or may not interleave
     unique = False  # every symbol in every generated pattern is unique in order to avoid patterns to block each other
-    input_type = 1  # 1=CATEGORICAL
     nrOfPatterns = 5
     minsup = None
     minPatSup = 10  # per pattern a percentage of the total nr of events -> in tenths of a percentage, i.e. 10=1%
@@ -348,8 +325,6 @@ def main(argv):
         if opt == '-h':
             usage()
             sys.exit(2)
-        elif opt == '-i':
-            input_type = int(arg)
         elif opt == '-l':
             interleave = bool(arg)
         elif opt == '-p':
@@ -384,8 +359,7 @@ def main(argv):
             maxPatSup > 1000 or \
             maxPatSup < minPatSup or \
             maxGapChance < minGapChance or \
-            maxSize < minSize or \
-            (input_type != 1 and input_type != 2):
+            maxSize < minSize:
         print('Wrong input!')
         usage()
         sys.exit(2)
@@ -393,14 +367,14 @@ def main(argv):
     # generate the patterns
     patterns = None
     if nrOfPatterns != 0:
-        patterns = generateRandomPatterns(input_type, nrOfPatterns, minPatSup, maxPatSup, minGapChance, maxGapChance,
+        patterns = generateRandomPatterns(nrOfPatterns, minPatSup, maxPatSup, minGapChance, maxGapChance,
                                           minSize, maxSize, nrAttr, alphPerAttr, nrMev, unique)
         if patterns is None:
             print('ERROR: alphabet too small to fit all unique generated patterns.')
             sys.exit(1)
 
     # generate the data
-    result = generateData(input_type, nrMev, nrAttr, alphPerAttr, patterns, overwrite, interleave, nrSequence, nrOfSequence)
+    result = generateData(nrAttr, alphPerAttr, patterns, overwrite, interleave, nrSequence, nrOfSequence)
     d_file = result[0]
     p_file = result[1]
     if minsup is None:
