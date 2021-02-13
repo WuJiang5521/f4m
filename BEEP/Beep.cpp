@@ -3,7 +3,7 @@
 
 using namespace std;
 
-int beep_enter(int argc, char **argv) {
+int enter_beep(int argc, char **argv) {
     Parameters parameters;
     parameters.release = true;
 

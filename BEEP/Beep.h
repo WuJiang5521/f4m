@@ -82,6 +82,6 @@ private:
     Parameters *par;
 };
 
-int beep_enter(int argc, char **argv);
+int enter_beep(int argc, char **argv);
 
 #endif

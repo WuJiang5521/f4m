@@ -3,7 +3,6 @@
 
 
 #include <cstdio>
-//#include <tchar.h>
 #include <cfloat>
 #include <list>
 #include <algorithm>
@@ -35,7 +34,7 @@ static const double logbase = log(2);
 #include <random>
 
 #ifdef MISS
-extern bool miss_print_debug; // DEBUFG
+extern bool miss_print_debug; // DEBUG
 extern std::ofstream outfile_miss; // DEBUG
 #endif
 

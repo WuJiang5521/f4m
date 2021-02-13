@@ -12,5 +12,5 @@ int main() {
             "true"
     };
     int quantitative_argc = sizeof(quantitative_argv) / sizeof(char *);
-    beep_enter(quantitative_argc, quantitative_argv);
+    enter_beep(quantitative_argc, quantitative_argv);
 }
