@@ -1,7 +1,3 @@
-//
-// Created by GuoZiYang on 2021/2/1.
-//
-
 #include "PatternTable.h"
 
 std::vector<std::vector<int>> PatternTable::pre_table;

@@ -1,7 +1,3 @@
-//
-// Created by GuoZiYang on 2021/2/1.
-//
-
 #ifndef LSH_P_P_TABLE_H
 #define LSH_P_P_TABLE_H
 

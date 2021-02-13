@@ -73,19 +73,15 @@ double CodeTable::compute_sz_ct_c(Sequence *s) {
     int *alphabet_sizes = par->alphabet_sizes;
     int nrAttr = par->nr_of_attributes;
 
-    if (s->get_input_type() == CATEGORICAL) {
-        for (int aid = 0; aid < nrAttr; ++aid) {
-            int alph = alphabet_sizes[aid];
-            if (par->fill_patterns && par->fill_pattern[aid])
-                alph -= 1;
-            size += mu->intcost(
-                    alph);                                                    //TERM: L_N(|Omega_aid|)					-> #singletons
-            size += mu->lg_choose(par->nr_events,
-                                  alph);                            //TERM: log( ||D^aid|| OVER |Omega_aid| )	-> singleton supports
-        }
-    } else //ITEMSET
-        size += mu->lg_choose(s->get_nr_events(),
-                              par->nr_of_attributes);            //TERM: log(||D|| OVER |A|)					-> support for all attributes; divide all events over all singletons. NOTE: singletons can have zero support -> thus NOT log(||D||-1 OVER |A|-1)
+    for (int aid = 0; aid < nrAttr; ++aid) {
+        int alph = alphabet_sizes[aid];
+        if (par->fill_patterns && par->fill_pattern[aid])
+            alph -= 1;
+        size += mu->intcost(
+                alph);                                                    //TERM: L_N(|Omega_aid|)					-> #singletons
+        size += mu->lg_choose(par->nr_events,
+                              alph);                            //TERM: log( ||D^aid|| OVER |Omega_aid| )	-> singleton supports
+    }
 
     int non_singletons = length_ct;
     for (int aid = 0; aid < nrAttr; ++aid)

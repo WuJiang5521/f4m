@@ -170,52 +170,31 @@ int Sequence::read(FILE *f) {
 #ifdef LSH
     int cnt_nr_i = 0;
 #endif
-    if (par->input_type == CATEGORICAL) {
-        while (fscanf(f, "%d", &a) == 1) {
-            if (cnt++ < par->nr_of_attributes)    //skip header line
-                continue;
-            if (a == -2) acnt++;            //end of attribute
-            if (acnt < 2) {
-                //all attributes have same number of sequences and events, so we only count the events and sequences in the first attribute
-                if (a >= 0) {
-                    mcnt++;    //new event
-#ifdef LSH
-                    ++cnt_nr_i;
-                    if (cnt_nr_i == cut_size) {
-                        cnt_nr_i = 0;
-                        ++scnt;
-                    }
-#endif
-                }
-                else {
-                    scnt++;       //new sequence
-#ifdef LSH
-                    cnt_nr_i = 0;
-#endif
-                }
-            }
-        }
-        ecnt = mcnt * acnt;
-    } else //ITEM SET
-    {
-        while (fscanf(f, "%d", &a) == 1) {
-            if (cnt++ < par->nr_of_attributes)    //skip header line
-                continue;
-            if (a == -2) {
-                if (mcnt == 0)
-                    mcnt = 2;    //the first and last events
-                mcnt++;            //new event
-            }
-            if (a == -1) scnt++;            //new sequence
+    while (fscanf(f, "%d", &a) == 1) {
+        if (cnt++ < par->nr_of_attributes)    //skip header line
+            continue;
+        if (a == -2) acnt++;            //end of attribute
+        if (acnt < 2) {
+            //all attributes have same number of sequences and events, so we only count the events and sequences in the first attribute
             if (a >= 0) {
-                ecnt++;                        //new event
-                if (a > acnt)
-                    acnt = a;                //the max value is also the max nr of events in a event, i.e. max nr of attributes
+                mcnt++;    //new event
+#ifdef LSH
+                ++cnt_nr_i;
+                if (cnt_nr_i == cut_size) {
+                    cnt_nr_i = 0;
+                    ++scnt;
+                }
+#endif
+            }
+            else {
+                scnt++;       //new sequence
+#ifdef LSH
+                cnt_nr_i = 0;
+#endif
             }
         }
-        acnt++;                                //acnt contained the highest aid, but we also have aid=0, thus aid++
-
     }
+    ecnt = mcnt * acnt;
     rewind(f);
     par->nr_events = mcnt;
     nr_sequences = scnt;
@@ -245,72 +224,47 @@ int Sequence::read(FILE *f) {
     pre_init();
 
     cnt = -1;
-    if (par->input_type == CATEGORICAL) {
-        int sym;
-        int i = 0;                //event id
-        int sid = 0;            //sequence id
-        int aid = 0;            //attribute id
+    int sym;
+    int i = 0;                //event id
+    int sid = 0;            //sequence id
+    int aid = 0;            //attribute id
 #ifdef LSH
-        int cnt_i = 0;
+    int cnt_i = 0;
 #endif
-        while (fscanf(f, "%d", &sym) == 1) {
-            if (cnt++ < par->nr_of_attributes)    //skip header line
-                continue;
-            if (sym == -2) {
-                aid++;
-                i = 0;
+    while (fscanf(f, "%d", &sym) == 1) {
+        if (cnt++ < par->nr_of_attributes)    //skip header line
+            continue;
+        if (sym == -2) {
+            aid++;
+            i = 0;
 #ifdef LSH
-                cnt_i = 0;
+            cnt_i = 0;
 #endif
-                sid = 0;
-                continue;
-            }
-            if (sym == -1) {
-#ifdef LSH
-                cnt_i = 0;
-#endif
-                sid++;
-                continue;
-            }
-            if (aid == 0) {
-                mev_time[i] = new Event(par->nr_of_attributes, i, sid);
-                sequence_sizes[sid]++;
-            }
-            Event *me = mev_time[i];
-            occ[aid][sym].push_back(me);
-            me->add_event(new Attribute(sym, aid, me->get_size(), tree_ids[aid][sym]));
-            i++;
-#ifdef LSH
-            ++cnt_i;
-            if (cnt_i == cut_size) {
-                cnt_i = 0;
-                ++sid;
-            }
-#endif
+            sid = 0;
+            continue;
         }
-    } else //ITEM SET
-    {
-        int aid;
-        int i = 0;                //event id
-        int sid = 0;            //sequence id
-        if (par->nr_events > 0)
-            mev_time[i] = new Event(par->nr_of_attributes, i, sid);    //first event
-        while (fscanf(f, "%d", &aid) == 1) {
-            if (cnt++ < par->nr_of_attributes)    //skip header line
-                continue;
-            if (aid == -1)
-                sid++;
-            if (aid < 0) {
-                i++;
-                mev_time[i] = new Event(par->nr_of_attributes, i, sid);
-                continue;
-            }
-
+        if (sym == -1) {
+#ifdef LSH
+            cnt_i = 0;
+#endif
+            sid++;
+            continue;
+        }
+        if (aid == 0) {
+            mev_time[i] = new Event(par->nr_of_attributes, i, sid);
             sequence_sizes[sid]++;
-            Event *me = mev_time[i];
-            occ[aid][0].push_back(me);                        //in item set case the symbol is always 0
-            me->add_event(new Attribute(0, aid, me->get_size(), tree_ids[aid][0]));
         }
+        Event *me = mev_time[i];
+        occ[aid][sym].push_back(me);
+        me->add_event(new Attribute(sym, aid, me->get_size(), tree_ids[aid][sym]));
+        i++;
+#ifdef LSH
+        ++cnt_i;
+        if (cnt_i == cut_size) {
+            cnt_i = 0;
+            ++sid;
+        }
+#endif
     }
     return 0;
 }
