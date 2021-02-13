@@ -1,13 +1,13 @@
 #ifndef BEEP_H
 #define BEEP_H
 
-#include "stdafx.h"
+#include "Common.h"
 #include "Sequence.h"
 #include "Pattern.h"
 #include "CodeTable.h"
-#include "cover.h"
+#include "Cover.h"
 #include "Node.h"
-#include "getopt.h"
+#include "GetOpt.h"
 
 class Beep {
 public:
@@ -43,7 +43,7 @@ public:
 
     prunepattern_set::iterator find_pattern_in_set(prunepattern_set *pset, Pattern *p);
 
-    void breakDown(Pattern *p);
+    void break_down(Pattern *p);
 #ifdef LSH
     void generate_candidates(usg_sz *current_usgSz); // our generator for less generation
 #else
@@ -55,29 +55,29 @@ public:
 
     void load_or_build_min_windows(Pattern *p);
 
-    CodeTable *get_codeTable() { return g_ct; }
+    CodeTable *get_codeTable() { return ct; }
 
-    Cover *get_cover() { return g_cover; }
+    Cover *get_cover() { return cover; }
 
 
 private:
-    CodeTable *g_ct;
+    CodeTable *ct;
 
-    candpattern_set *g_cand;            //ordered on estimated gain
-    usagepattern_set *g_ct_on_usg;        //ordered on usage
+    candpattern_set *cand;            //ordered on estimated gain
+    usagepattern_set *ct_on_usg;        //ordered on usage
 
-    Cover *g_cover{};
+    Cover *cover{};
 #ifdef LSH
     priority_queue<pair<int, pair<Pattern*, Pattern*>>> *candidate_order; // candidate order that generated from Table
     const double cand_threshold = 0.05; // the candidate whose table value is less than cand_threshold * nrSequence is abandoned
 #endif
 
-    pattern_set *g_white_list;            //contains all considered candidates so we don't need to compute their support and min_windows again
-    pattern_set *g_black_list;            //contains all considered candidates with sup = 0
+    pattern_set *white_list;            //contains all considered candidates so we don't need to compute their support and min_windows again
+    pattern_set *black_list;            //contains all considered candidates with sup = 0
 
-    ostringstream g_output_stream;
+    ostringstream output_stream;
 
-    Node *g_root;
+    Node *root;
 
     Parameters *par;
 };

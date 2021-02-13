@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.h"
 #include "Beep.h"
 
 using namespace std;
@@ -46,7 +46,7 @@ int beep_enter(int argc, char **argv) {
 
         char opt_pattern[] = "i:t:m:p:w:f:";
         int c, pos;
-        while ((c = getopt(argc, argv, opt_pattern)) != -1) {
+        while ((c = get_opt(argc, argv, opt_pattern)) != -1) {
             switch (c) {
                 case 'w':
                     parameters.FP_windows = (atoi(poptarg) != 0);
@@ -144,7 +144,7 @@ Beep::Beep(Parameters *par) : par(par) {
 #ifdef MISS
     outfile_miss.open("./miss_debug_output.txt");
 #endif
-    g_output_stream << par->seq->print_sequence(false);      //DEBUG
+    output_stream << par->seq->print_sequence(false);      //DEBUG
 
     par->start = time(nullptr);
     par->cnt_exact = 0;
@@ -152,11 +152,11 @@ Beep::Beep(Parameters *par) : par(par) {
     par->cnt_union_subset = 0;
     par->cnt_unrelated = 0;
 
-    //build a codeTable
-    g_ct = new CodeTable(par->seq);
-    g_black_list = new pattern_set;
-    g_white_list = new pattern_set;
-    g_ct_on_usg = new usagepattern_set;        //set to combine CTxCT based on usage
+    //build a code_table
+    ct = new CodeTable(par->seq);
+    black_list = new pattern_set;
+    white_list = new pattern_set;
+    ct_on_usg = new usagepattern_set;        //set to combine CTxCT based on usage
 #ifdef LSH
     candidate_order = new priority_queue<pair<int, pair<Pattern*, Pattern*>>>();
 #endif
@@ -169,78 +169,78 @@ Beep::Beep(Parameters *par) : par(par) {
         for (int sym = 0; sym < alphabet_sizes[aid]; ++sym) {
             auto **event_sets = new event_set *[1];
             event_sets[0] = new event_set;
-            event_sets[0]->insert(new Event(sym, aid, 0, tree_ids[aid][sym]));
+            event_sets[0]->insert(new Attribute(sym, aid, 0, tree_ids[aid][sym]));
             auto *p = new Pattern(1, event_sets, par->seq);
-            g_ct->insert_pattern(p);
-            g_ct_on_usg->insert(p);
+            ct->insert_pattern(p);
+            ct_on_usg->insert(p);
         }
     }
 #ifdef LSH
     vector<Pattern*> singletons;
-    P_P_Table::pattern_id_map.clear();
+    PatternTable::pattern_id_map.clear();
     int initial_pattern_id_map_top = 0;
-    for (auto & p : *(g_ct->get_CT())) {
+    for (auto & p : *(ct->get_ct())) {
         singletons.push_back(p);
-        P_P_Table::pattern_id_map[p] = initial_pattern_id_map_top++;
-        P_P_Table::pattern_id_table.push_back(p);
+        PatternTable::pattern_id_map[p] = initial_pattern_id_map_top++;
+        PatternTable::pattern_id_table.push_back(p);
     }
 
-    P_P_Table::table_size = initial_pattern_id_map_top;
-    P_P_Table::pre_table.resize(P_P_Table::table_size);
-    P_P_Table::last_table.resize(P_P_Table::table_size);
-    for (int i = 0; i < P_P_Table::table_size; ++i) {
-        P_P_Table::pre_table[i].resize(P_P_Table::table_size, 0);
-        P_P_Table::last_table[i].resize(P_P_Table::table_size, 0);
+    PatternTable::table_size = initial_pattern_id_map_top;
+    PatternTable::pre_table.resize(PatternTable::table_size);
+    PatternTable::last_table.resize(PatternTable::table_size);
+    for (int i = 0; i < PatternTable::table_size; ++i) {
+        PatternTable::pre_table[i].resize(PatternTable::table_size, 0);
+        PatternTable::last_table[i].resize(PatternTable::table_size, 0);
     }
 #endif
 
     //build a tree that represents all patterns of length == 1
     //each timestep in a new candidate is run through this tree to see if it still can be frequent
-    g_root = new Node(nr_singletons, par->alphabet_sizes, 0);
+    root = new Node(nr_singletons, par->alphabet_sizes, 0);
 
-    g_cand = new candpattern_set;    //NOTE: candidates are ordered based on estimated gain
+    cand = new candpattern_set;    //NOTE: candidates are ordered based on estimated gain
 
-    auto it_ct_1 = g_ct_on_usg->begin(), it_ct_2 = g_ct_on_usg->begin(), begin_ct = g_ct_on_usg->begin(), end_ct = g_ct_on_usg->end();    //iterators to update candidate list
+    auto it_ct_1 = ct_on_usg->begin(), it_ct_2 = ct_on_usg->begin(), begin_ct = ct_on_usg->begin(), end_ct = ct_on_usg->end();    //iterators to update candidate list
 
-    auto *g_cover = new Cover(par->seq, g_ct, false);    //determine ST size
+    auto *g_cover = new Cover(par->seq, ct, false);    //determine ST size
 #ifdef LSH
     delete candidate_order;
     candidate_order = new priority_queue<pair<int, pair<Pattern*, Pattern*>>>();
-    for (int i = 0; i < (*P_P_Table::table).size(); ++i) {
-        for (int j = 0; j < (*P_P_Table::table)[i].size(); ++j) {
-            candidate_order->push(make_pair((*P_P_Table::table)[i][j], make_pair(P_P_Table::pattern_id_table[i], P_P_Table::pattern_id_table[j])));
+    for (int i = 0; i < (*PatternTable::table).size(); ++i) {
+        for (int j = 0; j < (*PatternTable::table)[i].size(); ++j) {
+            candidate_order->push(make_pair((*PatternTable::table)[i][j], make_pair(PatternTable::pattern_id_table[i], PatternTable::pattern_id_table[j])));
         }
     }
 #endif
 
-    auto *current_usgSz = new usg_sz(g_cover->get_total_usage(), g_cover->get_sz_sequence_and_CT());
+    auto *current_usgSz = new usg_sz(g_cover->get_total_usage(), g_cover->get_sz_sequence_and_ct());
     double init_sz = current_usgSz->sz;
 
     double STsize = current_usgSz->sz;
-    g_output_stream << "\n\nST " << *current_usgSz << endl;//DEBUG
-    g_output_stream << g_ct->print_CT(false);//DEBUG
+    output_stream << "\n\nST " << *current_usgSz << endl;//DEBUG
+    output_stream << ct->print_ct(false);//DEBUG
 
     while (true) {
 #ifdef LSH
         if ((candidate_order->empty() || candidate_order->top().first < cand_threshold * par->seq->get_nr_sequences()) &&
-            g_cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
+            cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
             break;
         generate_candidates(current_usgSz);
 #else
         if (it_ct_2 == end_ct &&
-        g_cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
+        cand->empty())                //we stop when there are no more candidates to generate. NOTE it_ct_2 reaches end first
             break;
         //update candidates
         generate_candidates(&it_ct_1, &it_ct_2, &begin_ct, &end_ct, current_usgSz);
 #endif
 //        cout << "*****" << endl;
-        if (g_cand->empty())
+        if (cand->empty())
             continue;
 
         //Add top candidate
-        Pattern *top = *g_cand->begin();
-        g_cand->erase(
-                top);                            //do not consider this candidate again. NOTE: it must also be erased from g_cand to not be compared to as best candidate
+        Pattern *top = *cand->begin();
+        cand->erase(
+                top);                            //do not consider this candidate again. NOTE: it must also be erased from cand to not be compared to as best candidate
 
         if (par->prune_est_gain && top->get_estimated_gain() <= 0)
             continue;
@@ -251,33 +251,33 @@ Beep::Beep(Parameters *par) : par(par) {
         if (top->get_support() < par->minsup)
             continue;
 
-        if (!g_ct->insert_pattern(
+        if (!ct->insert_pattern(
                 top))                //pattern already present. NOTE this check must be after set_min_windows, because pattern equality is also based on support
             continue;                                //already present
 #ifdef LSH
-        P_P_Table::check_table();
+        PatternTable::check_table();
         int pattern_id_map_top = 0;
-        P_P_Table::pattern_id_table.clear();
-        P_P_Table::pattern_id_map.clear();
-        for (auto & p : *(g_ct->get_CT())) {
-            P_P_Table::pattern_id_map[p] = pattern_id_map_top++;
-            P_P_Table::pattern_id_table.push_back(p);
+        PatternTable::pattern_id_table.clear();
+        PatternTable::pattern_id_map.clear();
+        for (auto & p : *(ct->get_ct())) {
+            PatternTable::pattern_id_map[p] = pattern_id_map_top++;
+            PatternTable::pattern_id_table.push_back(p);
         }
 
-        P_P_Table::table_size = pattern_id_map_top;
-        if (P_P_Table::table_size > P_P_Table::pre_table.size()) {
-            P_P_Table::pre_table.resize(P_P_Table::table_size);
-            P_P_Table::last_table.resize(P_P_Table::table_size);
-            for (int i = 0; i < P_P_Table::table_size; ++i) {
-                P_P_Table::pre_table[i].resize(P_P_Table::table_size, 0);
-                P_P_Table::last_table[i].resize(P_P_Table::table_size, 0);
+        PatternTable::table_size = pattern_id_map_top;
+        if (PatternTable::table_size > PatternTable::pre_table.size()) {
+            PatternTable::pre_table.resize(PatternTable::table_size);
+            PatternTable::last_table.resize(PatternTable::table_size);
+            for (int i = 0; i < PatternTable::table_size; ++i) {
+                PatternTable::pre_table[i].resize(PatternTable::table_size, 0);
+                PatternTable::last_table[i].resize(PatternTable::table_size, 0);
             }
         }
-        P_P_Table::clear_table(P_P_Table::table_size);
+        PatternTable::clear_table(PatternTable::table_size);
 #endif
         //Cover
-        g_cover = new Cover(par->seq, g_ct, false);
-        double new_size = g_cover->get_sz_sequence_and_CT();
+        g_cover = new Cover(par->seq, ct, false);
+        double new_size = g_cover->get_sz_sequence_and_ct();
         int new_total_usage = g_cover->get_total_usage();
 
 //        cout << "current_size = " << current_usgSz->sz << "  new_size = " << new_size << " dL: " << (init_sz - current_usgSz->sz) / init_sz * 100.0 << endl;//DEBUG
@@ -287,23 +287,23 @@ Beep::Beep(Parameters *par) : par(par) {
             if (par->gapvariants)                                                    //recursively try variations of top+singleton
                 current_usgSz = try_variations(top, current_usgSz);
 
-            //rebuild g_ct_on_usg because usages have changed
-            g_ct_on_usg->clear();
-            for (auto it_ct : *g_ct->get_CT())
-                g_ct_on_usg->insert(it_ct);
+            //rebuild ct_on_usg because usages have changed
+            ct_on_usg->clear();
+            for (auto it_ct : *ct->get_ct())
+                ct_on_usg->insert(it_ct);
 
             //add CTxCT to candidates
-            g_cand->clear();
-            end_ct = g_ct_on_usg->end();
-            begin_ct = g_ct_on_usg->begin();
+            cand->clear();
+            end_ct = ct_on_usg->end();
+            begin_ct = ct_on_usg->begin();
 #ifdef LSH
             delete candidate_order;
             candidate_order = new priority_queue<pair<int, pair<Pattern*, Pattern*>>>();
-            for (auto it1 = (g_ct->get_CT())->begin(); it1 != g_ct->get_CT()->end(); ++it1) {
-                for (auto it2 = it1; it2 != g_ct->get_CT()->end(); ++it2) {
+            for (auto it1 = (ct->get_ct())->begin(); it1 != ct->get_ct()->end(); ++it1) {
+                for (auto it2 = it1; it2 != ct->get_ct()->end(); ++it2) {
                     Pattern *minp = *it1 > *it2 ? *it2 : *it1;
                     Pattern *maxp = *it1 <= *it2 ? *it2 : *it1;
-                    candidate_order->push(make_pair((*P_P_Table::table)[P_P_Table::pattern_id_map[minp]][P_P_Table::pattern_id_map[maxp]],
+                    candidate_order->push(make_pair((*PatternTable::table)[PatternTable::pattern_id_map[minp]][PatternTable::pattern_id_map[maxp]],
                                                     make_pair(minp, maxp)));
                 }
             }
@@ -313,26 +313,26 @@ Beep::Beep(Parameters *par) : par(par) {
 #endif
 
             par->cnt_acc++;
-            g_output_stream << "top accepted: ";
-            g_output_stream << top->print(false);//DEBUG
+            output_stream << "top accepted: ";
+            output_stream << top->print(false);//DEBUG
         } else {
             par->cnt_rej++;
-            g_ct->delete_pattern(top);
-            g_ct->rollback();            //we need to rollback because all usages must be correct before we can generate more candidates
+            ct->delete_pattern(top);
+            ct->rollback();            //we need to rollback because all usages must be correct before we can generate more candidates
 #ifdef LSH
-            P_P_Table::rollback_table();
+            PatternTable::rollback_table();
 #endif
         }
 
     }
 
 
-    g_ct->delete_unused_patterns();            //Only at the very end
-    g_cover = new Cover(par->seq, g_ct, false);
+    ct->delete_unused_patterns();            //Only at the very end
+    g_cover = new Cover(par->seq, ct, false);
 
 #ifdef MISS
     int debug_miss_cnt = 0;
-    for (auto it_ct : *g_ct->get_CT()) {
+    for (auto it_ct : *ct->get_ct()) {
         if (it_ct->get_usage() > 0 && it_ct->get_length() > 1) {
             debug_miss_cnt += it_ct->get_usage_miss();
         }
@@ -352,16 +352,16 @@ Beep::Beep(Parameters *par) : par(par) {
     }
     cout << "event len: " << event_len << endl;
     int ct_no_singleton_cnt = 0, ct_len_avg = 0;
-    for (auto & p : *(g_ct->get_CT())) {
+    for (auto & p : *(ct->get_ct())) {
         ct_len_avg += p->get_size();
         if (p->get_size() > 1) {
             ++ct_no_singleton_cnt;
         }
     }
-    cout << "P num: " << ct_no_singleton_cnt << "P len avg: " << (double)ct_len_avg / g_ct->get_CT()->size() << endl;
-    double now_L = g_cover->get_sz_sequence_and_CT();
+    cout << "P num: " << ct_no_singleton_cnt << "P len avg: " << (double)ct_len_avg / ct->get_ct()->size() << endl;
+    double now_L = g_cover->get_sz_sequence_and_ct();
 #ifdef MISS
-//        for (auto it_ct : *g_ct->get_CT()) {
+//        for (auto it_ct : *ct->get_ct()) {
 //            if (it_ct->get_usage() > 0 && it_ct->get_length() > 1) {
 //                now_L -= it_ct->get_usage_miss() *
 //                        it_ct->get_codelength_miss();
@@ -371,29 +371,29 @@ Beep::Beep(Parameters *par) : par(par) {
     cout << "percent of delta L: " << (init_sz - now_L) / init_sz * 100.0 << endl;
     //compute breakdown results for found patterns
     if (!par->dummy_file.empty()) {
-        for (auto ct_it : *g_ct->get_CT()) {
+        for (auto ct_it : *ct->get_ct()) {
             if (ct_it->get_size() != 1)            //only consider non-singletons
-                breakDown(ct_it);
+                break_down(ct_it);
         }
 
         //print the dummies for debug purpose
         for (int i = 0; i < par->nr_of_patterns; ++i)
-            g_output_stream << "dummy " << i << ": " << par->dummies[i]->to_string() << endl;
+            output_stream << "Dummy " << i << ": " << par->dummies[i]->to_string() << endl;
     }
 
 #ifdef MISS // DEBUG
 //    miss_print_debug = true;
-//    g_cover = new Cover(par->seq, g_ct, false);
+//    cover = new Cover(par->seq, ct, false);
 #endif
 
-    g_output_stream << g_ct->print_CT(false);    //NOTE: after search for dummy patterns
+    output_stream << ct->print_ct(false);    //NOTE: after search for Dummy patterns
 
-    par->length_CT = g_ct->get_CT_length();
-    par->nr_non_singletons = g_ct->get_CT_length() - par->alphabet_size;
-    par->nr_non_singletons_per_size = g_ct->get_nr_non_singletons_per_size();
+    par->length_CT = ct->get_ct_length();
+    par->nr_non_singletons = ct->get_ct_length() - par->alphabet_size;
+    par->nr_non_singletons_per_size = ct->get_nr_non_singletons_per_size();
 
     par->STsize = STsize;
-    par->CTsize = g_cover->get_sz_sequence_and_CT();
+    par->CTsize = g_cover->get_sz_sequence_and_ct();
     par->perc = par->CTsize / par->STsize;
     par->eind = time(nullptr);
 
@@ -406,7 +406,7 @@ Beep::Beep(Parameters *par) : par(par) {
         fp_file = fopen((par->output_filename + "_FP_windows.txt").c_str(), "w");
         if (fp_file != nullptr) {
             stringstream result, result2;
-            for (auto p : *g_ct->get_CT()) {
+            for (auto p : *ct->get_ct()) {
                 if (p->get_usage() > 0 && p->get_size() > 1)        //all used non-singletons
                 {
                     result << p->print_fp_windows();
@@ -423,12 +423,12 @@ Beep::Beep(Parameters *par) : par(par) {
         p_file = fopen((par->output_filename + ".txt").c_str(), "w");
         if (p_file != nullptr) {
             if (par->runtimes)
-                g_output_stream << par->print();
-            fprintf(p_file, "%s", g_output_stream.str().c_str());
+                output_stream << par->print();
+            fprintf(p_file, "%s", output_stream.str().c_str());
             fclose(p_file);
         }
     } else {
-        cout << g_output_stream.str();
+        cout << output_stream.str();
         if (par->runtimes)
             cout << par->print();
     }
@@ -453,11 +453,11 @@ Beep::Beep(Parameters *par) : par(par) {
 }
 
 
-void Beep::breakDown(Pattern *p) {
+void Beep::break_down(Pattern *p) {
     //FOR EXACT MATCH - loop through all dummies
     bool exact = false;
     for (int i = 0; i < par->nr_of_patterns; ++i) {
-        dummy *d = par->dummies[i];
+        Dummy *d = par->dummies[i];
         exact = true;
 
         if (d->length != p->get_length() || d->size != p->get_size())
@@ -486,9 +486,9 @@ void Beep::breakDown(Pattern *p) {
         }
     }
 
-    //FOR SUBSET MATCH -> alle multi-events van het patroon komen in dezelfde volgorde voor in een dummy-patroon
+    //FOR SUBSET MATCH -> alle multi-events van het patroon komen in dezelfde volgorde voor in een Dummy-patroon
     for (int i = 0; i < par->nr_of_patterns; ++i) {
-        dummy *d = par->dummies[i];
+        Dummy *d = par->dummies[i];
         int dummy_ts = 0;
         bool subset;
         //every timestep must be found completely in the same order
@@ -508,7 +508,7 @@ void Beep::breakDown(Pattern *p) {
                         }
                     if (!complete_symbol) {
                         complete_timestep = false;
-                        break;        //try next timestep in dummy
+                        break;        //try next timestep in Dummy
                     }
                 }
                 dummy_ts++;
@@ -530,7 +530,7 @@ void Beep::breakDown(Pattern *p) {
         }
     }
 
-    //FOR UNION_SUBSET MATCH -> alle events komen in ��n dummy in verkeerde volgorde voor OF alle events komen in een (verschillende) dummy voor
+    //FOR UNION_SUBSET MATCH -> alle events komen in ��n Dummy in verkeerde volgorde voor OF alle events komen in een (verschillende) Dummy voor
     bool union_subset = true;
     for (int l = 0; l < p->get_length(); ++l) {
         event_set *evs = p->get_symbols(l);
@@ -539,7 +539,7 @@ void Beep::breakDown(Pattern *p) {
             bool found_event = false;
             for (int i = 0; i < par->nr_of_patterns; ++i) {
                 //loop over all dummies to find this event
-                dummy *d = par->dummies[i];
+                Dummy *d = par->dummies[i];
                 for (int dummy_ts = 0; dummy_ts < d->length; ++dummy_ts) {
                     attr_sym_set *as = d->events[dummy_ts];
                     for (auto a : *as)
@@ -578,7 +578,7 @@ void Beep::breakDown(Pattern *p) {
 bool Beep::check_if_dummy(Pattern *p) {
     bool match;
     for (int i = 0; i < par->nr_of_patterns; ++i) {
-        dummy *d = par->dummies[i];
+        Dummy *d = par->dummies[i];
         match = true;
 
         if (d->length != p->get_length() || d->size != p->get_size())
@@ -604,14 +604,14 @@ bool Beep::check_if_dummy(Pattern *p) {
 void Beep::load_or_build_min_windows(Pattern *p) {
     bool compute_min_windows = true;
     if (par->blacklist) {
-        auto fnd = g_black_list->find(p), end_black = g_black_list->end();
+        auto fnd = black_list->find(p), end_black = black_list->end();
         if (fnd != end_black) {
             p->load_windows_and_support((*fnd));
             compute_min_windows = false;
         }
     }
     if (compute_min_windows && par->whitelist) {
-        auto fnd = g_white_list->find(p), end_white = g_white_list->end();
+        auto fnd = white_list->find(p), end_white = white_list->end();
         if (fnd != end_white) {
             p->load_windows_and_support((*fnd));
             compute_min_windows = false;
@@ -627,12 +627,12 @@ void Beep::load_or_build_min_windows(Pattern *p) {
             par->cnt_infreq_materialized++;
 
         if (par->prune_tree && p->get_support() < par->minsup)
-            g_root->add_infrequent_pattern(p, p->get_symbols(0)->begin(), p->get_symbols(0)->end());
+            root->add_infrequent_pattern(p, p->get_symbols(0)->begin(), p->get_symbols(0)->end());
 
         if (par->whitelist)
-            g_white_list->insert(p);                    //so we never have to compute its support and min_windows again
+            white_list->insert(p);                    //so we never have to compute its support and min_windows again
         if (par->blacklist && p->get_support() == 0)
-            g_black_list->insert(p);                    //so we never have to compute its support and min_windows again
+            black_list->insert(p);                    //so we never have to compute its support and min_windows again
     }
 }
 
@@ -641,7 +641,7 @@ usg_sz *Beep::try_variations(Pattern *accepted, usg_sz *current_usgSz) {
     auto *temp_cand = new pattern_set;                    //so we don't try the same variation more often for the same pattern
     auto temp_end = temp_cand->end();
 
-    Multi_event **mev_time = par->seq->get_mev_time();
+    Event **mev_time = par->seq->get_mev_time();
 
     int new_length = accepted->get_length() + 1;
 
@@ -680,8 +680,8 @@ usg_sz *Beep::try_variations(Pattern *accepted, usg_sz *current_usgSz) {
                     if (par->prune_tree) {
                         //find_pattern returns true when the pattern or any prefix of it is known to be infrequent, we call this method with the pattern p starting from all its timesteps to consider all subpatterns
                         for (int startPos = 0; startPos < newp->get_length(); ++startPos) {
-                            if (g_root->find_pattern(newp, startPos, newp->get_symbols(0)->begin(),
-                                                     newp->get_symbols(0)->end())) {
+                            if (root->find_pattern(newp, startPos, newp->get_symbols(0)->begin(),
+                                                   newp->get_symbols(0)->end())) {
                                 par->cnt_infreq++;
                                 delete_pattern = true;
                                 break;        //if the pattern from one of the startPositions is found then we know enough
@@ -697,15 +697,15 @@ usg_sz *Beep::try_variations(Pattern *accepted, usg_sz *current_usgSz) {
 
                         if (newp->get_support() < par->minsup) {
                             if (par->prune_tree)//add to prune tree
-                                g_root->add_infrequent_pattern(newp, newp->get_symbols(0)->begin(),
-                                                               newp->get_symbols(0)->end());
+                                root->add_infrequent_pattern(newp, newp->get_symbols(0)->begin(),
+                                                             newp->get_symbols(0)->end());
                         } else {
-                            if (g_ct->insert_pattern(
+                            if (ct->insert_pattern(
                                     newp))                    //NOTE this check must be after set_min_windows, because pattern equality is also based on support
                             {
-                                g_cover = new Cover(par->seq, g_ct, false);
-                                double new_size = g_cover->get_sz_sequence_and_CT();
-                                int new_total_usage = g_cover->get_total_usage();
+                                cover = new Cover(par->seq, ct, false);
+                                double new_size = cover->get_sz_sequence_and_ct();
+                                int new_total_usage = cover->get_total_usage();
                                 if (new_size < current_usgSz->sz)                                    //Check improvement
                                 {
                                     par->cnt_acc_var++;
@@ -715,15 +715,15 @@ usg_sz *Beep::try_variations(Pattern *accepted, usg_sz *current_usgSz) {
                                                                    current_usgSz);                //recursively try variations of newp+singleton
                                 } else {
                                     par->cnt_rej_var++;
-                                    g_ct->delete_pattern(newp);
+                                    ct->delete_pattern(newp);
 #ifdef LSH
-//                                    --P_P_Table::total_p_id;
+//                                    --PatternTable::total_p_id;
 #endif
                                 }
                             }
 #ifdef LSH
 //                            else {
-//                                --P_P_Table::total_p_id;
+//                                --PatternTable::total_p_id;
 //                            }
 #endif
                         }
@@ -828,8 +828,8 @@ void Beep::insert_candidates(pattern_set *list) {
         if (par->prune_tree) {
             //find_pattern returns true when the pattern or any prefix of it is known to be infrequent, we call this method with the pattern p starting from all its timesteps to consider all subpatterns
             for (int startPos = 0; startPos < p->get_length(); ++startPos) {
-                if (g_root->find_pattern(p, startPos, p->get_symbols(startPos)->begin(),
-                                         p->get_symbols(startPos)->end())) {
+                if (root->find_pattern(p, startPos, p->get_symbols(startPos)->begin(),
+                                       p->get_symbols(startPos)->end())) {
                     par->cnt_infreq++;
                     delete_pattern = true;
                     break;        //if the pattern from one of the startPositions is found then we know enough
@@ -837,9 +837,9 @@ void Beep::insert_candidates(pattern_set *list) {
             }
         }
         if (!delete_pattern) {
-            auto candidate_end = g_cand->end();
-            if (find_pattern_in_set(g_cand, p) == candidate_end)
-                g_cand->insert(p);
+            auto candidate_end = cand->end();
+            if (find_pattern_in_set(cand, p) == candidate_end)
+                cand->insert(p);
             else
                 delete_pattern = true;
         }
@@ -855,15 +855,15 @@ void Beep::insert_candidates(pattern_set *list) {
 //Returns true when we do not combine x and y because of their usage compared to bestCand
 //Returns a list of patterns constructed from a and b via the pattern_set* result
 bool Beep::combine_patterns(Pattern *a, Pattern *b, int total_usage, pattern_set *result) {
-    if (!g_cand->empty() && (a->get_usage() < (*g_cand->begin())->get_estimated_usage() ||
-            b->get_usage() < (*g_cand->begin())->get_estimated_usage()))
+    if (!cand->empty() && (a->get_usage() < (*cand->begin())->get_estimated_usage() ||
+            b->get_usage() < (*cand->begin())->get_estimated_usage()))
         return true;
 
     int usg_z, usg_x, usg_y;
 
     //check whether they specify values for a similar attribute
     bool sim_attr = false;
-    set<int> *set_x = a->get_total_AIDs(), *set_y = b->get_total_AIDs();
+    set<int> *set_x = a->get_total_aids(), *set_y = b->get_total_aids();
     auto endY = set_y->end();
     for (int it : *set_x) {
         if (set_y->find(it) != endY) {
@@ -999,7 +999,7 @@ Pattern *Beep::build_pattern(Pattern *a, Pattern *b, int offset) {
 
 usg_sz *Beep::postprune(Pattern *accepted, int total_usg, double current_size) {
     auto *pruneset = new prunepattern_set;
-    for (auto p : *g_ct->get_CT()) {
+    for (auto p : *ct->get_ct()) {
         if (p->get_size() > 1)//singletons can't be pruned
             if (p->get_usage_decreased())
                 pruneset->insert(p);
@@ -1010,32 +1010,32 @@ usg_sz *Beep::postprune(Pattern *accepted, int total_usg, double current_size) {
         Pattern *top = *it_top;
 
         pruneset->erase(it_top);        //erase on iterator, because pruneset compares on usage
-        g_ct->delete_pattern(top);
+        ct->delete_pattern(top);
 
-        g_cover = new Cover(par->seq, g_ct, false);
+        cover = new Cover(par->seq, ct, false);
 
-        double new_size = g_cover->get_sz_sequence_and_CT();
+        double new_size = cover->get_sz_sequence_and_ct();
         if (new_size < current_size)            //Check improvement
         {
             //check if pruned pattern was subset of last accepted pattern
             if (par->prune_check) {
                 if (!check_subset(top, accepted)) {
-                    g_output_stream << "\nPruned a pattern that was not a subset of the accepted pattern.\n"
+                    output_stream << "\nPruned a pattern that was not a subset of the accepted pattern.\n"
                                    << "\tAccepted: " << accepted->print(false) << "\tPruned: " << top->print(false)
                                    << endl;
                 }
             }
-            total_usg = g_cover->get_total_usage();
+            total_usg = cover->get_total_usage();
             current_size = new_size;
             //add more prune candidates
-            for (auto p : *g_ct->get_CT()) {
+            for (auto p : *ct->get_ct()) {
                 if (p->get_size() > 1 && p->get_usage_decreased())                //singletons can't be pruned
                     if (find_pattern_in_set(pruneset, p) != pruneset->end())    //if not already present
                         pruneset->insert(p);
             }
         } else {
-            g_ct->rollback();
-            g_ct->insert_pattern(top);        //put pattern back
+            ct->rollback();
+            ct->insert_pattern(top);        //put pattern back
         }
     }
     delete pruneset;
@@ -1091,12 +1091,12 @@ prunepattern_set::iterator Beep::find_pattern_in_set(prunepattern_set *pset, Pat
 
 Beep::~Beep() {
     delete par->seq;
-    delete g_ct;
-    delete g_cand;
-    delete g_ct_on_usg;
-    delete g_cover;
-    if (g_white_list)
-        g_white_list->clear();
-    delete g_white_list;
-    delete g_black_list;
+    delete ct;
+    delete cand;
+    delete ct_on_usg;
+    delete cover;
+    if (white_list)
+        white_list->clear();
+    delete white_list;
+    delete black_list;
 }

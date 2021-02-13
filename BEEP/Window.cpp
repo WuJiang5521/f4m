@@ -1,12 +1,12 @@
-#include "stdafx.h"
+#include "Common.h"
 #include "Window.h"
 #include "Pattern.h"
 
-Window::Window(const Multi_event **mevp, Pattern *p) : mev_positions(mevp),
-                                                       pat(p),
-                                                       next(nullptr),
-                                                       next_disjoint(nullptr),
-                                                       prev_disjoint(nullptr) {
+Window::Window(const Event **mevp, Pattern *p) : mev_positions(mevp),
+                                                 pat(p),
+                                                 next(nullptr),
+                                                 next_disjoint(nullptr),
+                                                 prev_disjoint(nullptr) {
     first = mev_positions[0];
     last = mev_positions[pat->get_length() - 1];
 

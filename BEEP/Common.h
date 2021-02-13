@@ -1,8 +1,6 @@
 #ifndef STDAFX_H
 #define STDAFX_H
 
-#include "targetver.h"
-
 
 #include <cstdio>
 //#include <tchar.h>

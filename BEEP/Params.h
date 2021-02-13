@@ -4,11 +4,11 @@
 #include <limits>
 #include <cstdint>
 
-#include "defines.h"
+#include "Defines.h"
 
 
-struct params {
-    params() : sparse(false), thresh(1) {};
+struct Params {
+    Params() : sparse(false), thresh(1) {};
 
     bool sparse;
     int thresh;

@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "mathutil.h"
+#include "Common.h"
+#include "MathUtil.h"
 
 //const double logbase = log(2);
 
@@ -18,7 +18,7 @@ diff(double a, double b) {
 }
 
 
-mathutil::mathutil(int maxElements, int maxSymbol) : lg_fact(maxElements + 1), pow2(maxSymbol + 1) {
+MathUtil::MathUtil(int maxElements, int maxSymbol) : lg_fact(maxElements + 1), pow2(maxSymbol + 1) {
     for (int i = 2; i <= maxElements; i++)
         lg_fact[i] = lg_fact[i - 1] + lg2(i);
 
@@ -28,7 +28,7 @@ mathutil::mathutil(int maxElements, int maxSymbol) : lg_fact(maxElements + 1), p
         pow2[i] = pow2[i - 1] * 2;
 }
 
-double mathutil::stirling(int n, int k) const {
+double MathUtil::stirling(int n, int k) const {
     double s, ns;
 
     ns = s = std::numeric_limits<double>::min();
@@ -50,7 +50,7 @@ double mathutil::stirling(int n, int k) const {
     return s - lg_factorial(k);
 }
 
-double mathutil::intcost(int u) const {
+double MathUtil::intcost(int u) const {
     double c = lg2(2.865064);
     double z = lg2(u);
 

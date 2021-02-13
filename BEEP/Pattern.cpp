@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Common.h"
 #include "Pattern.h"
 #include "Sequence.h"
 
@@ -74,7 +74,7 @@ void Pattern::init() {
     size = 0;                            //nr of events in the pattern
     szST = 0;                            //encoded size given ST
     total_AIDs = set<int>();                //compute the AIDs over all time steps
-    double **base_code_lengths = g_seq->get_ST_codelengths();
+    double **base_code_lengths = g_seq->get_st_codelengths();
     for (int l = 0; l < length; ++l) {
         for (auto e : *event_sets[l]) {
             total_AIDs.insert(e->attribute);
@@ -183,7 +183,7 @@ double Pattern::compute_estimated_gain(int usg_x, int usg_y, int usg_z, int usg_
     int usgS2 = usg_s - usg_z;                        //total usage after adding Z
 
     int nrAttr = g_seq->get_parameters()->nr_of_attributes;
-    mathutil *mu = g_seq->get_mu();
+    MathUtil *mu = g_seq->get_mu();
 
     //DELTA L(CT+Z | C)
     gain -= mu->intcost(length);                                // length of the pattern = L_N( |X| )
@@ -206,7 +206,7 @@ double Pattern::compute_estimated_gain(int usg_x, int usg_y, int usg_z, int usg_
 
 //NOTE: usage must be set before this method, i.e. cover must be run
 #ifdef MISS
-void Pattern::update_codelength(double sum, double miss_sum, mathutil* mu, int nr_of_attributes)
+void Pattern::update_codelength(double sum, double miss_sum, MathUtil* mu, int nr_of_attributes)
 #else
 void Pattern::update_codelength(double sum)    //sum includes laplace for every pattern
 #endif
@@ -233,16 +233,16 @@ void Pattern::update_codelength(double sum)    //sum includes laplace for every 
 }
 
 
-/*loop over all occurences for the last Multi_event in this pattern and do the following:
-	-step back until we have a window that contains all Multi_events of the pattern -> not always minimal
-	-from first Multi_event in the pattern step forward to find minimal window within the recently found window
-	-note: when a Multi_event can be located at multiple timesteps in the minimal window, in this approach we always choose the first possibility in time. E.g. we choose the first b when covering the minimal window abbc with pattern abc.
+/*loop over all occurences for the last Event in this pattern and do the following:
+	-step back until we have a window that contains all events of the pattern -> not always minimal
+	-from first Event in the pattern step forward to find minimal window within the recently found window
+	-note: when a Event can be located at multiple timesteps in the minimal window, in this approach we always choose the first possibility in time. E.g. we choose the first b when covering the minimal window abbc with pattern abc.
 */
 list<Window *> *Pattern::build_min_windows(Sequence *s) //NOTE: 's' might be different from 'g_seq'
 {
     support = 0;
     auto *result = new list<Window *>();
-    const auto **occ_per_timestep = new const list<Multi_event *> *[length];
+    const auto **occ_per_timestep = new const list<Event *> *[length];
     int *sup_per_timestep = new int[length];
     for (int l = 0; l < length; ++l) {
         occ_per_timestep[l] = s->find_occurrences(event_sets[l]);
@@ -252,13 +252,13 @@ list<Window *> *Pattern::build_min_windows(Sequence *s) //NOTE: 's' might be dif
     }
 
     if (length > 1) {
-        const Multi_event **mev_positions;
-        const Multi_event *front, *back;
+        const Event **mev_positions;
+        const Event *front, *back;
         auto it_last = occ_per_timestep[length - 1]->rbegin(),
                 end_last = occ_per_timestep[length - 1]->rend();
-        while (it_last != end_last) //loop over all occurences of the last Multi_event in the pattern
+        while (it_last != end_last) //loop over all occurences of the last Event in the pattern
         {
-            mev_positions = new const Multi_event *[length];
+            mev_positions = new const Event *[length];
             front = nullptr;
             back = *it_last;
             int id = back->id;
@@ -294,7 +294,7 @@ list<Window *> *Pattern::build_min_windows(Sequence *s) //NOTE: 's' might be dif
             if (!stop && front != nullptr)    //if a window was found
             {
                 int cur_id = front->id;
-                for (int pos = 1; pos < length; ++pos)    //first Multi_event is already in right place
+                for (int pos = 1; pos < length; ++pos)    //first Event is already in right place
                 {
                     auto it = occ_per_timestep[pos]->begin(), end = occ_per_timestep[pos]->end();    //iterator
                     while ((*it)->id <= cur_id) ++it;
@@ -359,7 +359,7 @@ list<Window *> *Pattern::build_min_windows(Sequence *s) //NOTE: 's' might be dif
     } else {   //length == 1, thus every occurence is a minWindow
         for (auto it : *occ_per_timestep[0]) {
             ++support;
-            const auto **mev_positions = new const Multi_event *[1];
+            const auto **mev_positions = new const Event *[1];
             mev_positions[0] = it;
             auto *w = new Window(mev_positions, this);
             if (!result->empty())
@@ -391,7 +391,7 @@ bool Pattern::overlap(Window *w, Window *nxt) const {
 
     //for the overlapping positions check if the two corresponding event-sets of this pattern overlap
     for (int posA = length - 1; posA >=
-                                offset; --posA)    //NOTE: offset >= patternlength means no overlap of Multi_events -> is automatically skipped by this loop
+                                offset; --posA)    //NOTE: offset >= patternlength means no overlap of events -> is automatically skipped by this loop
     {
         if (overlap(event_sets[posA], event_sets[posA - offset]))
             return true;
@@ -443,7 +443,7 @@ Pattern::~Pattern() {
     total_AIDs.clear();
 
     for (int l = 0; l < length; ++l) {
-        //events themselves get deleted when the multi_events are deleted, when the sequence is deleted
+        //events themselves get deleted when the events are deleted, when the sequence is deleted
         delete event_sets[l];        //delete the containers, not the events
     }
     delete[]event_sets;

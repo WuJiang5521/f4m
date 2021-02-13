@@ -8,12 +8,12 @@
 #include <map>
 #include "Pattern.h"
 
-class P_P_Table {
-    class My_hash_map {
+class PatternTable {
+    class MyHashMap {
         const int MOD = 1000007;
         int a[1000007]{};
     public:
-        My_hash_map() {memset(a, 0, sizeof a);}
+        MyHashMap() {memset(a, 0, sizeof a);}
         int operator[](Pattern* x) const {
             return a[(unsigned long long)x % MOD];
         }
@@ -35,7 +35,7 @@ public:
     static void rollback_table(); // switch *table back
     static int table_size; // current size of pre_table and last_table (pre_table and last_table have same size)
 
-    static My_hash_map pattern_id_map; // mapping from Pattern* to pattern-id
+    static MyHashMap pattern_id_map; // mapping from Pattern* to pattern-id
 };
 
 

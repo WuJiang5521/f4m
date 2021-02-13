@@ -1,7 +1,7 @@
-#include "stdafx.h"
-#include "getopt.h"
+#include "Common.h"
+#include "GetOpt.h"
 
-/* global variables that are specified as exported by getopt() */
+/* global variables that are specified as exported by get_opt() */
 char *poptarg = nullptr;    /* pointer to the start of the option argument  */
 int poptind = 1;       /* number of the next argv[] to be evaluated    */
 int popterr = 1;       /* non-zero if a question mark should be returned
@@ -10,7 +10,7 @@ int popterr = 1;       /* non-zero if a question mark should be returned
 /* handle possible future character set concerns by putting this in a macro */
 #define _next_char(string)  (char)(*(string+1))
 
-int getopt(int argc, char *argv[], char *optstring) {
+int get_opt(int argc, char **argv, char *optstring) {
     static char *index_position = nullptr; /* place inside current argv string */
     char *arg_string = nullptr;        /* where to start from next */
     char *opt_string;               /* the string in our program */

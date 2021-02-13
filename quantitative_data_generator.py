@@ -329,7 +329,7 @@ def main(argv):
     minSize = 5
     maxSize = 5
     nrAttr = 5 # 
-    alphPerAttr = 200 # 
+    alphPerAttr = 100 #
     overwrite = False
 
     nrSequence = 50 # 

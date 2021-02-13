@@ -1,11 +1,11 @@
 #ifndef COVER_H
 #define COVER_H
 
-#include "stdafx.h"
+#include "Common.h"
 #include "Pattern.h"
 #include "Sequence.h"
 #include "CodeTable.h"
-#include "P_P_Table.h"
+#include "PatternTable.h"
 //#ifndef LSH
 //#define LSH
 //#endif
@@ -13,13 +13,13 @@ using namespace std;
 
 class Cover {
 private:
-    CodeTable *g_codeTable;
-    Sequence *g_sequence;
-    int g_total_usage;
+    CodeTable *code_table;
+    Sequence *sequence;
+    int total_usage;
 #ifdef MISS
-    int g_total_usage_miss; // total usage for miss code
+    int total_usage_miss; // total usage for miss code
 #endif
-    double g_sz_sequence_and_CT;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
+    double sz_sequence_and_ct;            //total compressed size of Data and Code Table: L(D, CT) = L(D|CT) + L(CT)
     bool other_data;                    //false = we cover the data on which the Code Table is build, true = we cover other data
 
     Parameters *par;
@@ -45,9 +45,9 @@ public:
     void update_pattern_codelengths(
             codeTable_set *ct);    //after every Cover we need to update the codelenghts, except when we use a code set to cover other/new data
 
-    double get_sz_sequence_and_CT() const { return g_sz_sequence_and_CT; }
+    double get_sz_sequence_and_ct() const { return sz_sequence_and_ct; }
 
-    int get_total_usage() const { return g_total_usage; }
+    int get_total_usage() const { return total_usage; }
 };
 
 #endif

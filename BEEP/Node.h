@@ -1,108 +1,108 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "stdafx.h"
-#include "Event.h"
+#include "Common.h"
+#include "Attribute.h"
 #include "Pattern.h"
 
 class Node {
 public:
-    Node(int alphabet_size, int *alphabet_sizes, int timestep) : g_alphabetSize(alphabet_size),
-                                                                 g_alphabetSizes(alphabet_sizes), g_timestep(timestep) {
-        g_tree_id = 0;    //ROOT
+    Node(int alphabet_size, int *alphabet_sizes, int timestep) : alphabet_size(alphabet_size),
+                                                                 alphabet_sizes(alphabet_sizes), timestep(timestep) {
+        tree_id = 0;    //ROOT
         init(-1);
     }
 
-    Node(int alphabet_size, int *alphabet_sizes, int timestep, int id, int aid) : g_alphabetSize(alphabet_size),
-                                                                                  g_alphabetSizes(alphabet_sizes),
-                                                                                  g_timestep(timestep), g_tree_id(id) {
+    Node(int alphabet_size, int *alphabet_sizes, int timestep, int id, int aid) : alphabet_size(alphabet_size),
+                                                                                  alphabet_sizes(alphabet_sizes),
+                                                                                  timestep(timestep), tree_id(id) {
         init(aid);
     }
 
     ~Node();
 
     void init(int aid) {
-        g_next_timestep = nullptr;
-        g_infrequent = false;
-        g_pos_correction = 0;
+        next_timestep = nullptr;
+        infrequent = false;
+        pos_correction = 0;
         for (int i = 0; i <= aid; ++i)
-            g_pos_correction += g_alphabetSizes[i];                //symbols of lower or similar attributes can't become children
-        g_nr_children = g_alphabetSize -
-                        g_pos_correction;        //g_nr_children = g_alphabetSize - g_tree_id;//for item set data
-        g_children = new Node *[g_nr_children];
-        for (int i = 0; i < g_nr_children; ++i)
-            g_children[i] = nullptr;
+            pos_correction += alphabet_sizes[i];                //symbols of lower or similar attributes can't become children
+        nr_children = alphabet_size -
+                      pos_correction;        //nr_children = alphabet_size - tree_id;//for item set data
+        children = new Node *[nr_children];
+        for (int i = 0; i < nr_children; ++i)
+            children[i] = nullptr;
     }
 
 
     bool find_pattern(Pattern *p, int start_pos, event_set::iterator it,
                       event_set::iterator end)        //True when event_set found and thus not frequent, False otherwise
     {
-        if (g_infrequent)
+        if (infrequent)
             return true;
 
         if (it == end)        //check if there is a next node to go to
         {
-            if (g_timestep == p->get_length() - 1 - start_pos)
+            if (timestep == p->get_length() - 1 - start_pos)
                 return false;
             else {
-                if (g_next_timestep == nullptr)
+                if (next_timestep == nullptr)
                     return false;
                 else
-                    return g_next_timestep->find_pattern(p, start_pos,
-                                                         p->get_symbols(start_pos + g_timestep + 1)->begin(),
-                                                         p->get_symbols(start_pos + g_timestep + 1)->end());
+                    return next_timestep->find_pattern(p, start_pos,
+                                                       p->get_symbols(start_pos + timestep + 1)->begin(),
+                                                       p->get_symbols(start_pos + timestep + 1)->end());
             }
         }
         //evs is SORTED on tree_id, i.e. first ascending on attribute-level and then ascending alphabetically
-        int pos = (*it)->tree_id - g_pos_correction - 1;
-        if (g_children[pos] == nullptr)
+        int pos = (*it)->tree_id - pos_correction - 1;
+        if (children[pos] == nullptr)
             return false;
         else
-            return g_children[pos]->find_pattern(p, start_pos, ++it, end);
+            return children[pos]->find_pattern(p, start_pos, ++it, end);
     }
 
     void add_infrequent_pattern(Pattern *p, event_set::iterator it,
                                 event_set::iterator end)    //evs is SORTED: first ascending on attribute-level and then ascending alphabetically
     {
         if (it == end) {
-            if (g_timestep == p->get_length() - 1)
-                g_infrequent = true;
+            if (timestep == p->get_length() - 1)
+                infrequent = true;
             else {
-                if (g_next_timestep == nullptr)
-                    g_next_timestep = new Node(g_alphabetSize, g_alphabetSizes, g_timestep + 1);//Root
-                g_next_timestep->add_infrequent_pattern(p, p->get_symbols(g_timestep + 1)->begin(),
-                                                        p->get_symbols(g_timestep + 1)->end());
+                if (next_timestep == nullptr)
+                    next_timestep = new Node(alphabet_size, alphabet_sizes, timestep + 1);//Root
+                next_timestep->add_infrequent_pattern(p, p->get_symbols(timestep + 1)->begin(),
+                                                      p->get_symbols(timestep + 1)->end());
             }
         } else {
             int tree_id = (*it)->tree_id;
-            int pos = tree_id - g_pos_correction - 1;
-            if (g_children[pos] == nullptr)
-                g_children[pos] = new Node(g_alphabetSize, g_alphabetSizes, g_timestep, tree_id, (*it)->attribute);
-            g_children[pos]->add_infrequent_pattern(p, ++it, end);
+            int pos = tree_id - pos_correction - 1;
+            if (children[pos] == nullptr)
+                children[pos] = new Node(alphabet_size, alphabet_sizes, timestep, tree_id, (*it)->attribute);
+            children[pos]->add_infrequent_pattern(p, ++it, end);
         }
     }
 
     void print(const string& tab) {
-        cout << tab << "NODE id: " << g_tree_id << "  infreq=" << g_infrequent << "  #Children: " << g_nr_children
-             << "  nextTimestep: " << g_next_timestep << endl;
-        for (int i = 0; i < g_nr_children; ++i)
-            if (g_children[i] != nullptr)
-                g_children[i]->print(tab + "\t");
+        cout << tab << "NODE id: " << tree_id << "  infreq=" << infrequent << "  #Children: " << nr_children
+             << "  nextTimestep: " << next_timestep << endl;
+        for (int i = 0; i < nr_children; ++i)
+            if (children[i] != nullptr)
+                children[i]->print(tab + "\t");
     }
 
 private:
-    bool g_infrequent;    //whether the pattern represented by this node is known to be infrequent
-    int g_alphabetSize;
-    int *g_alphabetSizes;
-    int g_tree_id;        //ROOT = 0, rest ranges from 1 to g_alphabetSize
-    int g_nr_children;    //g_alphabetSize - g_tree_id
-    int g_pos_correction;
+    bool infrequent;    //whether the pattern represented by this node is known to be infrequent
+    int alphabet_size;
+    int *alphabet_sizes;
+    int tree_id;        //ROOT = 0, rest ranges from 1 to alphabet_size
+    int nr_children;    //alphabet_size - tree_id
+    int pos_correction;
 
-    Node **g_children;
+    Node **children;
 
-    Node *g_next_timestep;
-    int g_timestep;        //range 0 to ?
+    Node *next_timestep;
+    int timestep;        //range 0 to ?
 
 };
 

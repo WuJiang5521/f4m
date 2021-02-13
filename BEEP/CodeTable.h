@@ -1,10 +1,10 @@
 #ifndef CODETABLE_H
 #define CODETABLE_H
 
-#include "stdafx.h"
+#include "Common.h"
 #include "Pattern.h"
 #include "Sequence.h"
-#include "mathutil.h"
+#include "MathUtil.h"
 
 using namespace std;
 
@@ -14,9 +14,9 @@ public:
 
     ~CodeTable();
 
-    double compute_szD_CT(Sequence *s);
+    double compute_sz_d_ct(Sequence *sequence);
 
-    double compute_szCT_C(Sequence *s);
+    double compute_sz_ct_c(Sequence *s);
 
     double
     compute_sz(Sequence *s);                            //used when we use the CodeTable to compress other data
@@ -30,41 +30,41 @@ public:
 
     void rollback();
 
-    string print_CT() const { return print_CT(true); };
+    string print_ct() const { return print_ct(true); };
 
-    string print_CT(bool console_output) const;
+    string print_ct(bool console_output) const;
 
     string printpattern_set(bool console_output, codeTable_set *plist, const string &title) const;
 
     string printcandidate_set(bool console_output, candpattern_set *plist, const string &title) const;
 
-    double **get_STcodelengths() const { return g_STcodelengths; };
+    double **get_st_codelengths() const { return st_codelengths; };
 
-    int get_CT_length() const { return length_CT; };
+    int get_ct_length() const { return length_ct; };
 
-    codeTable_set *get_CT() const { return g_codeTable; };
+    codeTable_set *get_ct() const { return code_table; };
 #ifdef MISS
-    mathutil *get_math_util() const { return mu; }
+    MathUtil *get_math_util() const { return mu; }
 #endif
 
-    void set_szCT_C(Sequence *s) {
-        szCT_C = compute_szCT_C(s);
+    void set_sz_ct_c(Sequence *s) {
+        sz_ct_c = compute_sz_ct_c(s);
     }; //only called when the final CT for this data is computed
 
     list<usg_sz> *get_nr_non_singletons_per_size();
 
 private:
     Parameters *par;
-    mathutil *mu;
-    codeTable_set *g_codeTable;            //COVER ORDER: descending on cardinality, descending on support, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
+    MathUtil *mu;
+    codeTable_set *code_table;            //COVER ORDER: descending on cardinality, descending on support, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
 
-    Sequence *g_sequence;            //the data
+    Sequence *sequence;            //the data
 
-    int length_CT;                //total number of patterns in the codeTable (incl singletons)
-    double ratio;                    //between current compression rate of current codeSet versus standard codeTable
+    int length_ct;                //total number of patterns in the code_table (incl singletons)
+    double ratio;                    //between current compression rate of current codeSet versus standard code_table
 
-    double **g_STcodelengths;        //FOR EACH idLevel: the code length for each singleton item based on its relative frequency in the data (indexed by its own item-value, i.e. the length of pattern 2 is stored at position 2)
-    double szCT_C;                    //only computed once when the CT is used to cover the data it is build on
+    double **st_codelengths;        //FOR EACH idLevel: the code length for each singleton item based on its relative frequency in the data (indexed by its own item-value, i.e. the length of pattern 2 is stored at position 2)
+    double sz_ct_c;                    //only computed once when the CT is used to cover the data it is build on
 };
 
 #endif

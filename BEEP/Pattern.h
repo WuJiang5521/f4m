@@ -1,10 +1,10 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
-#include "stdafx.h"
+#include "Common.h"
 #include "Window.h"
-#include "Multi_event.h"
-#include "mathutil.h"
+#include "Event.h"
+#include "MathUtil.h"
 
 using namespace std;
 
@@ -27,9 +27,9 @@ public:
 
     string print_fp_windows() const;
 
-    int get_AID_rank() const { return AID_rank; }
+    int get_aid_rank() const { return AID_rank; }
 
-    double get_ST_size() const { return szST; }
+    double get_st_size() const { return szST; }
 
     int get_support() const { return support; }
 
@@ -72,7 +72,7 @@ public:
 
     Pattern *get_y() { return g_y; }
 
-    set<int> *get_total_AIDs() { return &total_AIDs; }
+    set<int> *get_total_aids() { return &total_AIDs; }
 
     int get_height_at_pos(int pos) const { return event_sets[pos]->size(); }
 
@@ -107,7 +107,7 @@ public:
     void load_windows_and_support(Pattern *p) {
         support = p->get_support();
         min_windows = p->get_min_windows(g_seq, false);
-    }                    //only used for g_black_list/whitelist
+    }                    //only used for black_list/whitelist
 
     void set_info(const string &s) { g_info += s; }
 
@@ -115,7 +115,7 @@ public:
 
     void reset_usage();
 #ifdef MISS
-    void update_codelength(double sum, double miss_sum, mathutil* mu, int nr_of_attributes);
+    void update_codelength(double sum, double miss_sum, MathUtil* mu, int nr_of_attributes);
 #else
     void update_codelength(double sum); //sum = sum of all usages + laplace
 #endif
@@ -127,7 +127,7 @@ private:
 
     Sequence *g_seq;
     set<int> total_AIDs;        //over all time steps the set of attributes contained in this pattern
-    int length;                //the number multi_events it contains
+    int length;                //the number events it contains
     int size;                //total nr of events in the pattern
     int AID_rank;            //rank based on the attributes it specifies values for, i.e. for every attribute we have a 1-bit when the pattern has a value for it, and a 0-bit otherwise
     double szST;            //size of the pattern encoded with base code lengths
@@ -176,15 +176,15 @@ inline bool operator<(const Pattern &lhs, const Pattern &rhs) {
         return true;
 
     //descending on L(X|ST)
-    if (lhs.get_ST_size() < rhs.get_ST_size())
+    if (lhs.get_st_size() < rhs.get_st_size())
         return false;
-    if (lhs.get_ST_size() > rhs.get_ST_size())
+    if (lhs.get_st_size() > rhs.get_st_size())
         return true;
 
 /*	//ascending on AID-rank
 	if (lhs.getAIDrank() > rhs.getAIDrank())
 		return false;
-	if (lhs.getAIDrank() < rhs.get_AID_rank())
+	if (lhs.getAIDrank() < rhs.get_aid_rank())
 		return true;
 */
     //ascending lexicographically
@@ -200,8 +200,8 @@ inline bool operator<(const Pattern &lhs, const Pattern &rhs) {
         event_set *avts = lhs.get_symbols(ts), *bvts = rhs.get_symbols(ts);
         auto ita = avts->begin(), enda = avts->end(), itb = bvts->begin(), endb = bvts->end();
         while (ita != enda && itb != endb) {
-            Event *eva = (*ita);
-            Event *evb = (*itb);
+            Attribute *eva = (*ita);
+            Attribute *evb = (*itb);
 
             if (*eva < *evb)        //NOTE: we compare events NOT integers
                 return true;
@@ -232,7 +232,7 @@ inline bool operator==(const Pattern &lhs, const Pattern &rhs) { return (!(lhs <
 inline bool operator!=(const Pattern &lhs, const Pattern &rhs) { return !(lhs == rhs); }
 
 
-struct Pattern_ptr_comp    //for code table
+struct PatternPtrComp    //for code table
 {
     bool operator()(const Pattern *lhs, const Pattern *rhs) const {
         return *lhs < *rhs;
@@ -241,7 +241,7 @@ struct Pattern_ptr_comp    //for code table
 
 
 //COVER ORDER: descending on cardinality, descending on support, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
-struct CodeTable_Pattern_ptr_comp    //for code table elements
+struct CodeTablePatternPtrComp    //for code table elements
 {
     bool operator()(const Pattern *lhs, const Pattern *rhs) const {
         //descending on cardinality
@@ -261,7 +261,7 @@ struct CodeTable_Pattern_ptr_comp    //for code table elements
 };
 
 //CANDIDATE ORDER: descending on gain, descending on support, descending on cardinality, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
-struct Candidate_Pattern_ptr_comp    //NOTE: top candidate is positioned at begin of the set
+struct CandidatePatternPtrComp    //NOTE: top candidate is positioned at begin of the set
 {
     bool operator()(const Pattern *lhs, const Pattern *rhs) const {
         //descending on estimated gain
@@ -281,7 +281,7 @@ struct Candidate_Pattern_ptr_comp    //NOTE: top candidate is positioned at begi
 };
 
 //USAGE ORDER: descending on usage, descending on support, descending on cardinality, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
-struct Usage_Pattern_ptr_comp {
+struct UsagePatternPtrComp {
     bool operator()(const Pattern *lhs, const Pattern *rhs) const {
         //descending on usage
         if (lhs->get_usage() < rhs->get_usage())
@@ -300,7 +300,7 @@ struct Usage_Pattern_ptr_comp {
 };
 
 //PRUNE ORDER: ascending on usage, descending on support, descending on cardinality, descending on L(X|ST), ascending on AID-rank, lexicographically ascending
-struct Prune_Pattern_ptr_comp    //for prune candidates -> prune-candidate with smallest usage is considered first and is positioned at the end of the set
+struct PrunePatternPtrComp    //for prune candidates -> prune-candidate with smallest usage is considered first and is positioned at the end of the set
 {
     bool operator()(const Pattern *lhs, const Pattern *rhs) const {
         //ascending on usage
@@ -319,15 +319,15 @@ struct Prune_Pattern_ptr_comp    //for prune candidates -> prune-candidate with 
     }
 };
 
-typedef std::set<Pattern *, Pattern_ptr_comp> pattern_set;                    //set of patterns
+typedef std::set<Pattern *, PatternPtrComp> pattern_set;                    //set of patterns
 
-typedef std::set<Pattern *, CodeTable_Pattern_ptr_comp> codeTable_set;        //set of patterns
+typedef std::set<Pattern *, CodeTablePatternPtrComp> codeTable_set;        //set of patterns
 
-typedef std::set<Pattern *, Candidate_Pattern_ptr_comp> candpattern_set;        //set of patterns
+typedef std::set<Pattern *, CandidatePatternPtrComp> candpattern_set;        //set of patterns
 
-typedef std::set<Pattern *, Usage_Pattern_ptr_comp> usagepattern_set;        //set of patterns
+typedef std::set<Pattern *, UsagePatternPtrComp> usagepattern_set;        //set of patterns
 
-typedef std::set<Pattern *, Prune_Pattern_ptr_comp> prunepattern_set;        //set of patterns
+typedef std::set<Pattern *, PrunePatternPtrComp> prunepattern_set;        //set of patterns
 
 
 struct usg_sz {
@@ -358,8 +358,8 @@ struct attr_sym {
 
 typedef set<attr_sym *> attr_sym_set;
 
-struct dummy {
-    dummy(int size, int length, attr_sym_set **events, int support, float gap_chance) : size(size), length(length),
+struct Dummy {
+    Dummy(int size, int length, attr_sym_set **events, int support, float gap_chance) : size(size), length(length),
                                                                                         events(events), support(support),
                                                                                         gapChance(gap_chance) {
     }
@@ -395,7 +395,7 @@ struct dummy {
 
 struct Parameters {
     string header() {
-        return "date; runtime; ST size; CT size; Perc. of orignal; |CT|; |non_singletons|; #exact; #subset; #union_subset; #unrelated; minsup; #multi_events; #attributes; alphabet_size; alphabet_size_per_attribute; #patterns; #patternfile; cnt_mat_pat; cnt_covers; cnt_acc; cnt_rej; cnt_acc_var; cnt_rej_var; cnt_infreq_materialized; cnt_infreq; input; output; gapvariants; blacklist; whitelist; prune_est_gain; prune_tree; input_type\n";
+        return "date; runtime; ST size; CT size; Perc. of orignal; |CT|; |non_singletons|; #exact; #subset; #union_subset; #unrelated; minsup; #events; #attributes; alphabet_size; alphabet_size_per_attribute; #patterns; #patternfile; cnt_mat_pat; cnt_covers; cnt_acc; cnt_rej; cnt_acc_var; cnt_rej_var; cnt_infreq_materialized; cnt_infreq; input; output; gapvariants; blacklist; whitelist; prune_est_gain; prune_tree; input_type\n";
     }
 
     string to_string() {
@@ -414,7 +414,7 @@ struct Parameters {
         else
             ss << "-; -; -; -;";
         ss << minsup << "; ";
-        ss << nr_multi_events << "; " << nr_of_attributes << "; " << alphabet_size << "; ";
+        ss << nr_events << "; " << nr_of_attributes << "; " << alphabet_size << "; ";
         for (int a = 0; a < nr_of_attributes; ++a)
             ss << " " << alphabet_sizes[a];
         ss << "; " << nr_of_patterns << "; " << dummy_file << "; ";
@@ -460,7 +460,7 @@ struct Parameters {
 
     int minsup,                    //a minimum support threshold for candidate patterns
     input_type,                //CATEGORICAL or ITEMSET
-    nr_multi_events,
+    nr_events,
             nr_of_attributes,
             temp_alphabet_size,        //for generated data we only specify the alphabet_size for a single attribute (similar for all attributes)
     alphabet_size,            //total over all attributes
@@ -490,7 +490,7 @@ struct Parameters {
 
     time_t start, eind;
 
-    dummy **dummies;                //a list of the inserted dummy-patterns
+    Dummy **dummies;                //a list of the inserted Dummy-patterns
 
 };
 

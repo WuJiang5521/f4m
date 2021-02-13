@@ -1,14 +1,14 @@
 #ifndef MATHUTIL_H
 #define MATHUTIL_H
 
-#include "stdafx.h"
+#include "Common.h"
 
 typedef std::vector<double> doublevector;
 typedef std::vector<int> intvector;
 
-class mathutil {
+class MathUtil {
 public:
-    mathutil(int maxElements, int maxSymbol);
+    MathUtil(int maxElements, int maxSymbol);
 
     double lg_choose(int n, int k) const {
         return lg_fact[n] - lg_fact[k] - lg_fact[n - k];

@@ -8,18 +8,17 @@ add_executable(
         test.cpp
 
         BEEP/CodeTable.cpp BEEP/CodeTable.h
-        BEEP/cover.cpp BEEP/cover.h
-        BEEP/defines.h
+        BEEP/Cover.cpp BEEP/Cover.h
+        BEEP/Defines.h
         BEEP/Beep.cpp BEEP/Beep.h
-        BEEP/Event.h
-        BEEP/getopt.cpp BEEP/getopt.h
-        BEEP/mathutil.cpp BEEP/mathutil.h
-        BEEP/Multi_event.cpp BEEP/Multi_event.h
+        BEEP/Attribute.h
+        BEEP/GetOpt.cpp BEEP/GetOpt.h
+        BEEP/MathUtil.cpp BEEP/MathUtil.h
+        BEEP/Event.cpp BEEP/Event.h
         BEEP/Node.cpp BEEP/Node.h
-        BEEP/params.h
+        BEEP/Params.h
         BEEP/Pattern.cpp BEEP/Pattern.h
         BEEP/Sequence.cpp BEEP/Sequence.h
-        BEEP/stdafx.h
-        BEEP/targetver.h
-        BEEP/P_P_Table.cpp
+        BEEP/Common.h
+        BEEP/PatternTable.cpp
         BEEP/Window.cpp BEEP/Window.h)

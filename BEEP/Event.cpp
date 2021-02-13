@@ -1,29 +1,29 @@
-#include "stdafx.h"
-#include "Multi_event.h"
+#include "Common.h"
+#include "Event.h"
 
 using namespace std;
 
 
-Multi_event::Multi_event(int alphabetSize, int id, int seqid) : alphabetSize(alphabetSize), id(id), seqid(seqid) {
+Event::Event(int alphabetSize, int id, int seqid) : alphabetSize(alphabetSize), id(id), seqid(seqid) {
     events = new event_set;
     nxt = nullptr;
     size = 0;
 }
 
-Multi_event::~Multi_event() {
+Event::~Event() {
     events->clear();            //delete the events
     delete events;                //delete the container
     delete[]is_covered;
 }
 
 
-//when all symbols are added to this Multi_event
-void Multi_event::finished() {
+//when all symbols are added to this Event
+void Event::finished() {
     is_covered = new Pattern *[size];
 }
 
-void Multi_event::print() const {
-    std::cout << "Multi_event: alphabet_size = " << alphabetSize << " sym-aid-id {";
+void Event::print() const {
+    std::cout << "Event: alphabet_size = " << alphabetSize << " sym-aid-id {";
     auto it = events->begin(), end = events->end();
     while (it != end) {
         std::cout << (*it)->symbol << "-" << (*it)->attribute << "-" << (*it)->id;
@@ -33,14 +33,14 @@ void Multi_event::print() const {
     std::cout << "} id: " << id << " seqid: " << seqid << std::endl;
 }
 
-void Multi_event::reset_cover() {
+void Event::reset_cover() {
     for (int i = 0; i < size; ++i)
         is_covered[i] = nullptr;
     events_covered = 0;
 }
 
-//return true when entire Multi_event is covered
-bool Multi_event::cover(Event *e, Pattern *p) {
+//return true when entire Event is covered
+bool Event::cover(Attribute *e, Pattern *p) {
     auto it = events->find(e);
     if (it != events->end()) {
         if (!is_covered[(*it)->id]) {
@@ -52,7 +52,7 @@ bool Multi_event::cover(Event *e, Pattern *p) {
 }
 
 //return true when cover is possible
-bool Multi_event::try_cover(Event *e) {
+bool Event::try_cover(Attribute *e) {
     auto it = events->find(e);
     if (it != events->end()) {
         if (!is_covered[(*it)->id])

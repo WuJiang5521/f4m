@@ -1,27 +1,27 @@
-#include "stdafx.h"
-#include "cover.h"
+#include "Common.h"
+#include "Cover.h"
 /*	Changes the usage of the Patterns in the CodeTable as a result of the covering process
 	bool other_data: false = loop through the block's occurences, true = try to fit block on all positions in data */
-Cover::Cover(Sequence *s, CodeTable *codeTable, bool other_data) : g_sequence(s),
-                                                                   g_codeTable(codeTable),
+Cover::Cover(Sequence *s, CodeTable *codeTable, bool other_data) : sequence(s),
+                                                                   code_table(codeTable),
                                                                    other_data(other_data) {
-    g_sequence->get_parameters()->cnt_covers++;
+    sequence->get_parameters()->cnt_covers++;
 #ifdef LSH
 
-    delete[] g_sequence->cover_pattern;
+    delete[] sequence->cover_pattern;
 
-    g_sequence->cover_pattern = new set<Pattern*>[g_sequence->get_nr_sequences()];
+    sequence->cover_pattern = new set<Pattern*>[sequence->get_nr_sequences()];
 #endif
 
-    g_total_usage = 0;
-    g_sz_sequence_and_CT = 0;
-    g_sequence->reset_cover();
+    total_usage = 0;
+    sz_sequence_and_ct = 0;
+    sequence->reset_cover();
 
     bool cover_complete = false;
-    codeTable_set *ct = g_codeTable->get_CT();
+    codeTable_set *ct = codeTable->get_ct();
     Pattern *candidate;
 
-    par = g_sequence->get_parameters();
+    par = sequence->get_parameters();
 
     //make an array to quickly get pointers to singletons based on their attribute and symbol
     int nr_attr = par->nr_of_attributes;
@@ -42,7 +42,7 @@ Cover::Cover(Sequence *s, CodeTable *codeTable, bool other_data) : g_sequence(s)
                     0)->begin())->symbol] = candidate;
         }
 
-        candidate->reset_usage();                                        //reset the usage for the Pattern in the codeTable before covering
+        candidate->reset_usage();                                        //reset the usage for the Pattern in the code_table before covering
         if (cover_complete)
             continue;                                                    //do not break, because we still need to reset all usages
 
@@ -50,12 +50,12 @@ Cover::Cover(Sequence *s, CodeTable *codeTable, bool other_data) : g_sequence(s)
     }
 
     //cover the rest with singletons
-    g_sequence->cover_singletons(singletons);
+    sequence->cover_singletons(singletons);
 #ifdef LSH
-    for (int seq_id = 0; seq_id < g_sequence->get_nr_sequences(); ++seq_id) {
-        for (auto cp1 = g_sequence->cover_pattern[seq_id].begin(); cp1 != g_sequence->cover_pattern[seq_id].end(); ++cp1) {
-            for (auto cp2 = cp1; cp2 != g_sequence->cover_pattern[seq_id].end(); ++cp2) {
-                (*P_P_Table::table)[P_P_Table::pattern_id_map[*cp1]][P_P_Table::pattern_id_map[*cp2]]++;
+    for (int seq_id = 0; seq_id < sequence->get_nr_sequences(); ++seq_id) {
+        for (auto cp1 = sequence->cover_pattern[seq_id].begin(); cp1 != sequence->cover_pattern[seq_id].end(); ++cp1) {
+            for (auto cp2 = cp1; cp2 != sequence->cover_pattern[seq_id].end(); ++cp2) {
+                (*PatternTable::table)[PatternTable::pattern_id_map[*cp1]][PatternTable::pattern_id_map[*cp2]]++;
             }
         }
     }
@@ -70,20 +70,20 @@ Cover::Cover(Sequence *s, CodeTable *codeTable, bool other_data) : g_sequence(s)
 #endif
     update_pattern_codelengths(
             ct);                                        //only changes CL when we other_data = false
-    g_sz_sequence_and_CT = g_codeTable->compute_sz(g_sequence);
+    sz_sequence_and_ct = codeTable->compute_sz(sequence);
 }
 
 void Cover::compute_total_usage(codeTable_set *ct) {
-    g_total_usage = 0;
+    total_usage = 0;
     for (auto it_blockList : *ct)
-        g_total_usage += it_blockList->get_usage();
+        total_usage += it_blockList->get_usage();
 }
 
 #ifdef MISS
 void Cover::compute_total_usage_miss(codeTable_set *ct) {
-    g_total_usage_miss = 0;
+    total_usage_miss = 0;
     for (auto it_blockList : *ct)
-        g_total_usage_miss += it_blockList->get_usage_miss();
+        total_usage_miss += it_blockList->get_usage_miss();
 }
 #endif
 
@@ -98,7 +98,7 @@ bool Cover::cover_with_pattern_min_windows(Pattern *p) {
 //    }
 #endif
     //loop through all this block's minimal windows
-    list<Window *> *lst = p->get_min_windows(g_sequence, other_data);
+    list<Window *> *lst = p->get_min_windows(sequence, other_data);
 
     for (auto w : *lst) { //defines a minimal window
 #ifdef MISS
@@ -115,10 +115,10 @@ bool Cover::cover_with_pattern_min_windows(Pattern *p) {
 #else
             p->update_usages(w->get_gap_length());
 #endif
-            cover_complete = g_sequence->cover(p, w);
+            cover_complete = sequence->cover(p, w);
 #ifdef LSH
             int seq_id = w->get_mev_position(0)->seqid;
-            g_sequence->cover_pattern[seq_id].insert(p);
+            sequence->cover_pattern[seq_id].insert(p);
 #endif
         }
 
@@ -148,12 +148,12 @@ bool Cover::cover_window_with_pattern(Window *w, Pattern *p) {
 //        if (miss_print_debug) {
 //            outfile_miss << "pattern position: " << ts << endl;
 //        }
-        miss_cnt += g_sequence->try_cover(p->get_symbols(ts), w->get_mev_position(ts)->id);
+        miss_cnt += sequence->try_cover(p->get_symbols(ts), w->get_mev_position(ts)->id);
         if (miss_cnt > (p->get_size() + 5) / 10) {
             return -1;
         }
 #else
-        if (!g_sequence->try_cover(p->get_symbols(ts), w->get_mev_position(ts)->id))
+        if (!sequence->try_cover(p->get_symbols(ts), w->get_mev_position(ts)->id))
             return false;
 #endif
     }
@@ -167,15 +167,15 @@ bool Cover::cover_window_with_pattern(Window *w, Pattern *p) {
 
 void Cover::update_pattern_codelengths(codeTable_set *ct) {
     if (!other_data) {
-        double sum = (double) g_total_usage + g_codeTable->get_CT_length() * laplace;        //including laplace
+        double sum = (double) total_usage + code_table->get_ct_length() * laplace;        //including laplace
 #ifdef MISS
-        double miss_sum = (double) g_total_usage_miss;
+        double miss_sum = (double) total_usage_miss;
 #endif
-        //loop through all Patterns in the codeTable to update their optimal codelength
+        //loop through all Patterns in the code_table to update their optimal codelength
 
         for (auto it_block_list : *ct)
 #ifdef MISS
-            it_block_list->update_codelength(sum, miss_sum, g_codeTable->get_math_util(), par->nr_of_attributes);
+            it_block_list->update_codelength(sum, miss_sum, code_table->get_math_util(), par->nr_of_attributes);
 #else
             it_block_list->update_codelength(sum);
 #endif
