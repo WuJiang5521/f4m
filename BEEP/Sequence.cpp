@@ -262,7 +262,6 @@ int Sequence::read(FILE *f) {
     return 0;
 }
 
-//we compute the ST code lengths over the entire data and not per attribute. This makes it more suitable for item set data
 void Sequence::compute_st_codelengths() {
     ST_codelengths = new double *[par->nr_of_attributes];
     for (int aid = 0; aid < par->nr_of_attributes; ++aid) {

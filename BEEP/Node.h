@@ -28,7 +28,7 @@ public:
         for (int i = 0; i <= aid; ++i)
             pos_correction += alphabet_sizes[i];                //symbols of lower or similar attributes can't become children
         nr_children = alphabet_size -
-                      pos_correction;        //nr_children = alphabet_size - tree_id;//for item set data
+                      pos_correction;        //nr_children = alphabet_size - tree_id;
         children = new Node *[nr_children];
         for (int i = 0; i < nr_children; ++i)
             children[i] = nullptr;

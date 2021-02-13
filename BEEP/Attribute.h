@@ -18,7 +18,7 @@ public:
 #endif
     }
 
-    const int symbol;            //always 0 in ITEM SET data
+    const int symbol;
     const int attribute;
     const int id;                //range [0,|event|-1], to identify all events within a event/pattern, e.g. used for is_covered
     const int tree_id;            //ranges from 1 to alphabet_size

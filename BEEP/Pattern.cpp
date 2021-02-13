@@ -97,7 +97,6 @@ string Pattern::print(bool console_output) const {
         result << "{";
         auto it = event_sets[l]->begin(), end = event_sets[l]->end();
         while (it != end) {
-            //in ITEMSET case the attribute indicates the symbol, because each attribute is either present or not, but they are switched at init
             result << (*it)->attribute << "." << (*it)->symbol;
             if (++it != end) result << ",";
         }

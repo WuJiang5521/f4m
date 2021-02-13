@@ -91,7 +91,7 @@ protected:
     int nr_events;                                    //total number of events
     int nr_sequences;                                //number of sequences in the data
     int *sequence_sizes;                            //holds the length of each sequence (sequences are separated with '-1' in the input)
-    double **ST_codelengths;                        //for each attribute for each symbol its base codelengths, for itemset data ST_codelengths[aid][s], with aid=0
+    double **ST_codelengths;                        //for each attribute for each symbol its base codelengths
 
     int **tree_ids;                                    //all tree-id's based on attr and sym
 
