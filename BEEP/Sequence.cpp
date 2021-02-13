@@ -1,0 +1,525 @@
+#include "stdafx.h"
+#include <iterator>
+#include "Sequence.h"
+
+Sequence::Sequence(FILE *f, Parameters *par) : par(par) {
+    g_error = false;
+    if (read(f)) {
+        g_error = true;
+        return;
+    }
+    if (!par->dummy_file.empty()) {
+        if (load_dummies()) {
+            g_error = true;
+            return;
+        }
+    } else
+        par->nr_of_patterns = 0;
+    init();
+#ifdef LSH
+    cover_pattern = nullptr;
+#endif
+}
+
+int Sequence::load_dummies() {
+    string line;
+    ifstream myfile(par->dummy_file.c_str());
+    if (myfile.is_open()) {
+        int cnt = -1;
+        while (getline(myfile, line)) {
+            if (cnt == -1) {
+                istringstream buf(line);
+                istream_iterator<string> beg(buf), end;
+                vector<string> tokens(beg, end);
+                auto it_vec = tokens.begin(), end_vec = tokens.end();
+                par->input_type = atoi((*it_vec).c_str());
+                it_vec++;
+                par->nr_of_patterns = atoi((*it_vec).c_str());
+                par->dummies = new dummy *[par->nr_of_patterns];
+                it_vec++;
+                par->nr_of_attributes = atoi((*it_vec).c_str());
+                it_vec++;
+                par->temp_alphabet_size = atoi((*it_vec).c_str());
+                par->alphabet_sizes = new int[par->nr_of_attributes];
+                for (int i = 0; i < par->nr_of_attributes; ++i)
+                    par->alphabet_sizes[i] = par->temp_alphabet_size;
+                par->alphabet_size = par->nr_of_attributes * par->temp_alphabet_size;
+
+                cnt++;
+                continue;
+            }
+
+            int size, length, support;
+            float gap_chance;
+            attr_sym_set **events;
+            istringstream buf(line);
+            istream_iterator<string> beg(buf), end;
+            vector<string> tokens(beg, end);
+            auto it_vec = tokens.begin(), end_vec = tokens.end();
+            size = atoi((*it_vec).c_str());
+            it_vec++;
+            length = atoi((*it_vec).c_str());
+            it_vec++;
+            support = atoi((*it_vec).c_str());
+            it_vec++;
+            gap_chance = atof((*it_vec).c_str());
+            it_vec++;
+            events = new attr_sym_set *[length];
+            for (int l = 0; l < length; ++l) {
+                int height = atoi((*it_vec).c_str());
+                it_vec++;
+                events[l] = new attr_sym_set;
+                for (int h = 0; h < height; ++h) {
+                    int aid = atoi((*it_vec).c_str());
+                    it_vec++;
+                    int sym = atoi((*it_vec).c_str());
+                    it_vec++;
+                    events[l]->insert(new attr_sym(aid, sym));
+                }
+            }
+            par->dummies[cnt] = new dummy(size, length, events, support, gap_chance);
+            cnt++;
+            if (cnt == par->nr_of_patterns)
+                break;
+        }
+        myfile.close();
+    } else {
+        cout << "ERROR opening pattern file: " << par->dummy_file << endl;
+        par->dummy_file = "";
+        return 1;
+    }
+    return 0;
+}
+
+
+void Sequence::pre_init() {
+    //compute all tree-id's once and save them based on sym and attr
+    tree_ids = new int *[par->nr_of_attributes];
+    int tree_id = 1;
+    for (int a = 0; a < par->nr_of_attributes; ++a) {
+        tree_ids[a] = new int[par->alphabet_sizes[a]];
+        for (int s = 0; s < par->alphabet_sizes[a]; ++s)
+            tree_ids[a][s] = tree_id++;
+    }
+}
+
+void Sequence::init() {
+    //count the nr of multi_events with each possible size
+    int *cnt = new int[par->nr_of_attributes + 1];
+    for (int sz = 0; sz <= par->nr_of_attributes; ++sz)
+        cnt[sz] = 0;
+
+    for (int mev = 0; mev < par->nr_multi_events; ++mev)
+        cnt[g_mev_time[mev]->get_size()]++;
+
+    g_mev_term = new float[par->nr_multi_events];
+    for (int mev = 0; mev < par->nr_multi_events; ++mev)
+        g_mev_term[mev] = -lg2(cnt[g_mev_time[mev]->get_size()] / (float) par->nr_multi_events);
+
+    mu = new mathutil(g_nr_events, par->alphabet_size);
+
+    compute_ST_codelengths();
+
+    is_covered = new int[par->nr_multi_events];
+    for (int i = 0; i < par->nr_multi_events; ++i) {
+        is_covered[i] = 0;                                //for each Multi_event we keep track whether it is covered
+        g_mev_time[i]->finished();                        //initialize the is_covered variable
+        if (i < (par->nr_multi_events - 1))                    //set NEXT pointers
+            g_mev_time[i]->set_next(g_mev_time[i + 1]);
+    }
+}
+
+//Return 1 in case of error
+int Sequence::read(FILE *f) {
+    int ecnt = 0;        //event count
+    int mcnt = 0;        //multi_event count
+    int scnt = 1;        //sequence count		NOTE: no -1 after last sequence
+    int acnt = 1;        //attribute count		NOTE: no -2 after last attribute
+    int a;                //symbol
+
+    /*
+    HEADER
+        Contains the number of attributes followed by the alphabetsize per attribute
+    CASE CATEGORICAL
+        Every line contains one attribute and ends with -2, all sequences are separated by -1
+        For each attribute i its values range from 0 to max_i
+    CASE ITEM SET
+        For every time step all its events are listed subsequently and time steps are separated with -2, all sequences are separated by -1
+        Each value ranges from 0 to max, where the value also indicates the id of the attribute
+    */
+
+    //read header info
+    int cnt = -1;
+    par->alphabet_size = 0;
+    while (fscanf(f, "%d", &a) == 1) {
+        if (cnt == -1) {
+            par->nr_of_attributes = a;
+            par->alphabet_sizes = new int[a];
+            cnt++;
+            continue;
+        }
+        if (cnt == par->nr_of_attributes)
+            break;
+        par->alphabet_sizes[cnt++] = a;
+        par->alphabet_size += a;
+    }
+
+    //count sequences and events
+    rewind(f);
+    cnt = -1;
+#ifdef LSH
+    int cnt_nr_i = 0;
+#endif
+    if (par->input_type == CATEGORICAL) {
+        while (fscanf(f, "%d", &a) == 1) {
+            if (cnt++ < par->nr_of_attributes)    //skip header line
+                continue;
+            if (a == -2) acnt++;            //end of attribute
+            if (acnt < 2) {
+                //all attributes have same number of sequences and events, so we only count the events and sequences in the first attribute
+                if (a >= 0) {
+                    mcnt++;    //new multi_event
+#ifdef LSH
+                    ++cnt_nr_i;
+                    if (cnt_nr_i == cut_size) {
+                        cnt_nr_i = 0;
+                        ++scnt;
+                    }
+#endif
+                }
+                else {
+                    scnt++;       //new sequence
+#ifdef LSH
+                    cnt_nr_i = 0;
+#endif
+                }
+            }
+        }
+        ecnt = mcnt * acnt;
+    } else //ITEM SET
+    {
+        while (fscanf(f, "%d", &a) == 1) {
+            if (cnt++ < par->nr_of_attributes)    //skip header line
+                continue;
+            if (a == -2) {
+                if (mcnt == 0)
+                    mcnt = 2;    //the first and last multi_events
+                mcnt++;            //new multi_event
+            }
+            if (a == -1) scnt++;            //new sequence
+            if (a >= 0) {
+                ecnt++;                        //new event
+                if (a > acnt)
+                    acnt = a;                //the max value is also the max nr of events in a multi_event, i.e. max nr of attributes
+            }
+        }
+        acnt++;                                //acnt contained the highest aid, but we also have aid=0, thus aid++
+
+    }
+    rewind(f);
+    par->nr_multi_events = mcnt;
+    g_nr_sequences = scnt;
+    g_nr_events = ecnt;
+
+    if (acnt != par->nr_of_attributes) {
+        cout
+                << "WARNING: header line differs from data! Must contain number of attributes followed by alphabetsize per attribute.\n";
+        return 0;    //Does not have to be an error
+    }
+
+    g_occ = new list<Multi_event *> *[par->nr_of_attributes];                    //for each aid
+    for (int aid = 0; aid < par->nr_of_attributes; ++aid) {
+        g_occ[aid] = new list<Multi_event *>[par->alphabet_sizes[aid]];        //for each symbol
+        for (int s = 0; s < par->alphabet_sizes[aid]; ++s)
+            g_occ[aid][s] = list<Multi_event *>();                        //a list of Multi_event* where it occurs
+
+    }
+
+    g_mev_time = new Multi_event *[par->nr_multi_events];                    //number of multi-events
+    for (int i = 0; i < par->nr_multi_events; ++i)
+        g_mev_time[i] = nullptr;
+    g_sequence_sizes = new int[g_nr_sequences];                            //number of sequences
+    for (int i = 0; i < g_nr_sequences; ++i)
+        g_sequence_sizes[i] = 0;
+
+    pre_init();
+
+    cnt = -1;
+    if (par->input_type == CATEGORICAL) {
+        int sym;
+        int i = 0;                //event id
+        int sid = 0;            //sequence id
+        int aid = 0;            //attribute id
+#ifdef LSH
+        int cnt_i = 0;
+#endif
+        while (fscanf(f, "%d", &sym) == 1) {
+            if (cnt++ < par->nr_of_attributes)    //skip header line
+                continue;
+            if (sym == -2) {
+                aid++;
+                i = 0;
+#ifdef LSH
+                cnt_i = 0;
+#endif
+                sid = 0;
+                continue;
+            }
+            if (sym == -1) {
+#ifdef LSH
+                cnt_i = 0;
+#endif
+                sid++;
+                continue;
+            }
+            if (aid == 0) {
+                g_mev_time[i] = new Multi_event(par->nr_of_attributes, i, sid);
+                g_sequence_sizes[sid]++;
+            }
+            Multi_event *me = g_mev_time[i];
+            g_occ[aid][sym].push_back(me);
+            me->add_event(new Event(sym, aid, me->get_size(), tree_ids[aid][sym]));
+            i++;
+#ifdef LSH
+            ++cnt_i;
+            if (cnt_i == cut_size) {
+                cnt_i = 0;
+                ++sid;
+            }
+#endif
+        }
+    } else //ITEM SET
+    {
+        int aid;
+        int i = 0;                //event id
+        int sid = 0;            //sequence id
+        if (par->nr_multi_events > 0)
+            g_mev_time[i] = new Multi_event(par->nr_of_attributes, i, sid);    //first multi_event
+        while (fscanf(f, "%d", &aid) == 1) {
+            if (cnt++ < par->nr_of_attributes)    //skip header line
+                continue;
+            if (aid == -1)
+                sid++;
+            if (aid < 0) {
+                i++;
+                g_mev_time[i] = new Multi_event(par->nr_of_attributes, i, sid);
+                continue;
+            }
+
+            g_sequence_sizes[sid]++;
+            Multi_event *me = g_mev_time[i];
+            g_occ[aid][0].push_back(me);                        //in item set case the symbol is always 0
+            me->add_event(new Event(0, aid, me->get_size(), tree_ids[aid][0]));
+        }
+    }
+    return 0;
+}
+
+//we compute the ST code lengths over the entire data and not per attribute. This makes it more suitable for item set data
+void Sequence::compute_ST_codelengths() {
+    g_ST_codelengths = new double *[par->nr_of_attributes];
+    for (int aid = 0; aid < par->nr_of_attributes; ++aid) {
+        g_ST_codelengths[aid] = new double[par->alphabet_sizes[aid]];
+        for (int s = 0; s < par->alphabet_sizes[aid]; ++s)
+            g_ST_codelengths[aid][s] = -lg2(
+                    (g_occ[aid][s].size() + laplace) / (g_nr_events + par->alphabet_size * laplace));
+    }
+
+}
+
+//Find all Multi_events that contain this set of events
+const list<Multi_event *> *Sequence::find_occurrences(event_set *events) const {
+    auto *occ = new list<Multi_event *>();
+    int nr_events = events->size();
+
+    auto *occ_per_event = new list<Multi_event *>::iterator[nr_events];        //for each event an iterator to the list of Multi_event where it occurs
+    auto *end_per_event = new list<Multi_event *>::iterator[nr_events];        //for each event an iterator to the end of the list of Multi_event where it occurs
+    int i = 0;
+    for (auto event : *events) {
+        occ_per_event[i] = g_occ[event->attribute][event->symbol].begin();
+        end_per_event[i] = g_occ[event->attribute][event->symbol].end();
+        ++i;
+    }
+
+    int smallest_id, smallest;
+    bool aligned;
+    while (true) {
+        if (occ_per_event[0] == end_per_event[0])
+            break;
+
+        smallest_id = (*occ_per_event[0])->id, smallest = 0;
+        aligned = true;
+        for (int j = 1; j < nr_events; ++j) {
+            if (occ_per_event[j] == end_per_event[j])
+                break;
+
+            if ((*occ_per_event[j])->id <
+                smallest_id)                    //keep track of the event with the earliest occurence
+            {
+                smallest_id = (*occ_per_event[j])->id;
+                smallest = j;
+            }
+
+            if ((*occ_per_event[j])->id != (*occ_per_event[j - 1])->id)    //check if all point at same Multi_event
+                aligned = false;
+        }
+#ifdef MISS
+        if (occ->empty() || *occ_per_event[smallest] != occ->back())
+            occ->push_back((*occ_per_event[smallest]));
+#else
+        if (aligned)                                                //add new occurence
+            occ->push_back((*occ_per_event[0]));
+#endif
+
+        occ_per_event[smallest]++;                                    //go to next occurence for the event with the earliest occurence
+        if (occ_per_event[smallest] == end_per_event[smallest])            //if there is no next occurence we stop
+            break;
+    }
+
+    return occ;
+}
+
+//RETURN true when whole cover is complete
+bool Sequence::cover(Pattern *p, Window *w) {
+    bool result = false;
+
+    event_set *events;
+    for (int ts = 0; ts < p->get_length(); ++ts) {
+        events = p->get_symbols(ts);
+        for (auto event : *events) {
+            if (result) {
+                g_output_stream << "\n\n\n\n\n";
+                g_output_stream
+                        << "ERROR: we checked that pattern p could cover window w, but everything is covered before this method is finished.\n";
+                g_output_stream << "The next event is: ";
+                event->print();
+                g_output_stream << "The pattern p: ";
+                p->print();
+                g_output_stream << "The window w: ";
+                w->print();
+                g_output_stream << "\n\n\n\n\n";
+            }
+            if (cover(event, w->get_mev_position(ts)->id, p))
+                result = true;
+        }
+    }
+    return result;
+}
+
+//RETURN true when whole cover is complete
+bool Sequence::cover(Event *e, int pos, Pattern *p) {
+    if (!is_covered[pos]) {
+        if (g_mev_time[pos]->cover(e, p)) {
+            is_covered[pos] = 1;
+            mev_covered++;
+        }
+    }
+    return (mev_covered == par->nr_multi_events);
+}
+#ifdef MISS
+int Sequence::try_cover(event_set *events, int pos) {
+    int miss_cnt = 0;
+    for (auto it: *events) {
+        if (!try_cover(it, pos)) {
+//            if (miss_print_debug) {
+////                outfile_miss << "sequence: " << g_mev_time[pos]->seqid << endl;
+//                int seq_id = g_mev_time[pos]->seqid;
+//                int debug_pos = pos;
+////                while (pos - debug_pos - 1 >= 0 && g_mev_time[pos - debug_pos - 1]->seqid == seq_id) ++debug_pos;
+//                outfile_miss << "position: " << debug_pos << endl;
+//                outfile_miss << "event: ";
+//                it->print();
+//            }
+            ++miss_cnt;
+        }
+    }
+    return miss_cnt;
+}
+#else
+//RETURN true when cover is possible
+bool Sequence::try_cover(event_set *events, int pos) {
+    for (auto it: *events) {
+        if (!try_cover(it, pos))
+            return false;
+    }
+    return true;
+}
+#endif
+
+//RETURN true when cover is possible
+bool Sequence::try_cover(Event *e, int pos) {
+    if (is_covered[pos])
+        return false;
+
+    return g_mev_time[pos]->try_cover(e);
+}
+
+//cover the rest of the data with singletons. Loop over all data
+void Sequence::cover_singletons(Pattern ***singletons) {
+    for (int i = 0; i < par->nr_multi_events; ++i) {
+        if (is_covered[i])    //this multi-event is already covered
+            continue;
+
+        for (auto it = g_mev_time[i]->get_events()->begin(); it != g_mev_time[i]->get_events()->end(); ++it) {
+            if (!g_mev_time[i]->test_covered((*it)->id)) {   //if not yet covered
+                //fill the is_covered array in Multi_event
+                g_mev_time[i]->cover((*it), singletons[(*it)->attribute][(*it)->symbol]);
+#ifdef MISS
+                singletons[(*it)->attribute][(*it)->symbol]->update_usages(0, 0);
+#else
+                singletons[(*it)->attribute][(*it)->symbol]->update_usages(0);
+#endif
+#ifdef LSH
+                    int seq_id = g_mev_time[i]->seqid;
+                    cover_pattern[seq_id].insert(singletons[(*it)->attribute][(*it)->symbol]);
+#endif
+            }
+        }
+    }
+}
+
+string Sequence::print_sequence(bool all_values) {
+    stringstream g_output_stream;
+    g_output_stream << "SEQUENCE. Alphabet size: " << par->alphabet_size << " #Attributes: " << par->nr_of_attributes
+                   << " alphabet sizes: {";
+    for (int i = 0; i < par->nr_of_attributes; ++i) {
+        g_output_stream << par->alphabet_sizes[i];
+        if (i + 1 < par->nr_of_attributes)
+            g_output_stream << ", ";
+    }
+    g_output_stream << "}" << endl;
+    g_output_stream << "#Multi_events: " << par->nr_multi_events << " total #events: " << g_nr_events << endl;
+    g_output_stream << "#Sequences: " << g_nr_sequences << endl;
+
+    if (all_values) //print the entire sequence
+    {
+        for (int i = 0; i < par->nr_multi_events; ++i) {
+            for (auto it: *(g_mev_time[i]->get_events())) {
+                g_output_stream << i << ":  ";
+                it->print();
+            }
+            g_output_stream << endl;
+        }
+    }
+
+    return g_output_stream.str();
+}
+
+Sequence::~Sequence() {
+    for (int i = 0; i < par->nr_multi_events; ++i)
+        delete g_mev_time[i];
+    delete[]g_mev_time;
+
+    for (int aid = 0; aid < par->nr_of_attributes; ++aid) {
+        delete[]g_ST_codelengths[aid];
+        delete[]g_occ[aid];
+    }
+    delete[]g_ST_codelengths;
+    delete[]g_occ;
+
+    delete[]g_sequence_sizes;
+    delete[]par->alphabet_sizes;
+
+    delete[]is_covered;
+
+}
