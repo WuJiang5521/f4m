@@ -43,11 +43,11 @@ The output file will be named as `output_fileData_quantitative_base.txt`.
 
 - CodeTable.h/.cpp
 
-  This class is used for our CodeTable in BEEP algorithm. It includes the set of current patterns and calculator of *L* value (which is an important index of MDL).
+  This class is used for our CodeTable in BEEP algorithm. It includes the set of current patterns and calculator of *L* value (the description length).
 
 - Common.h
 
-  Some common head files, defines and constant variables for all the other files.
+  Some common head files, definitions and constant variables for all the other files.
 
 - Cover.h/.cpp
 
