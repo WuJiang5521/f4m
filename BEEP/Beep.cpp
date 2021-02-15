@@ -110,7 +110,7 @@ int enter_beep(int argc, char **argv) {
     ss << parameters.minsup;
     int strt = parameters.input_filename.find_last_of("/\\") + 1, nd = parameters.input_filename.find_last_of('.');
     string temp = parameters.input_filename.substr(strt, nd - strt);
-    parameters.output_filename = "output_fileData_" + temp + "_minsup" + ss.str();
+    parameters.output_filename = "output_fileData_" + temp;
 
     if (parameters.fill_patterns)    //to make sure all (sub)streams are equally long they are padded with an extra symbol (last in alphabet) which is disregarded in computing size(D, CT)
     {
@@ -133,7 +133,7 @@ std::ofstream outfile_miss;
 #endif
 Beep::Beep(Parameters *par) : par(par) {
 #ifdef MISS
-    outfile_miss.open("./miss_debug_output.txt");
+    outfile_miss.open("./miss_debug_output.txt"); //DEBUG
 #endif
     output_stream << par->seq->print_sequence(false);      //DEBUG
 

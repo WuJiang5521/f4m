@@ -7,7 +7,7 @@ int main() {
     char *quantitative_argv[] = {
             "",
             "-i",
-            "../quantitative_base.dat",
+            "./quantitative_base.dat",
             "-w",
             "true"
     };
