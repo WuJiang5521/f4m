@@ -7,6 +7,13 @@ add_executable(
         BEEP
         test.cpp
 
+
+        base/BaseAttr.cpp base/BaseAttr.hpp
+        base/BaseSeq.cpp base/BaseSeq.hpp
+        base/BaseEvt.cpp base/BaseEvt.hpp
+        base/json.hpp
+        base/FileLoader.cpp base/FileLoader.hpp
+
         BEEP/CodeTable.cpp BEEP/CodeTable.h
         BEEP/Cover.cpp BEEP/Cover.h
         BEEP/Defines.h
@@ -21,4 +28,4 @@ add_executable(
         BEEP/Sequence.cpp BEEP/Sequence.h
         BEEP/Common.h
         BEEP/PatternTable.cpp
-        BEEP/Window.cpp BEEP/Window.h)
+        BEEP/Window.cpp BEEP/Window.h  base/BaseDS.cpp base/BaseDS.hpp)
