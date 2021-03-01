@@ -277,7 +277,7 @@ list<Window *> *Pattern::build_min_windows(Sequence *s) //NOTE: 's' might be dif
                 }
 
                 if (!stop && (back->id - (*it)->id) + 1 >
-                             2 * length - 1)  // max gapsize is patternlength-1 -> total length = 2*patternlength-1
+                             length)  // max gapsize is patternlength-1 -> total length = 2*patternlength-1
                     stop = true;
 
                 if (stop)
